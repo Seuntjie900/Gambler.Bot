@@ -507,12 +507,12 @@ namespace Gambler.Bot.Classes
                     maxDelay = System.Math.Max(maxDelay,msPerBet-TimeSinceLastBet);
                 }
                 maxDelay = System.Math.Max(maxDelay,strategy.GetBetDelay()-TimeSinceLastBet);
-                while (maxDelay > 0 )
+                if (maxDelay > 0 )
                 {
                     
-                    if (maxDelay <= 0)
-                        maxDelay = (10);
+                    
                     Thread.Sleep((int)maxDelay);
+                    maxDelay = 0;
                 }
                 return NextBext;
             }

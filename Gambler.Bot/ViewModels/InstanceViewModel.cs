@@ -448,7 +448,7 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                     tmpStrat = new ProgrammerModeCSViewModel(_logger);
                     break;
                 case "ProgrammerJS":
-                    tmpStrat = new ProgrammerModeCSViewModel(_logger);
+                    tmpStrat = new ProgrammerModeJSViewModel(_logger);
                     break;
                 case "ProgrammerPython":
                     tmpStrat = new ProgrammerModePYViewModel(_logger);
