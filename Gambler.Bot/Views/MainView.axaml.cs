@@ -60,6 +60,12 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
         timer = new Timer(cookietmrCallback, null, 1000, 1000);
         
     }
+
+    public static Task<string?> ExecJS(string js)
+    {
+        return _instance.wvBypass.InvokeScript(js);
+    }
+    
     Dictionary<string, string>? headers = new Dictionary<string, string>();
     string cookiesheader = "";
     private void WvBypass_WebResourceRequested(object? sender, WebResourceRequestedEventArgs e)

@@ -25,6 +25,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Gambler.Bot.Views;
 using static Gambler.Bot.Classes.PersonalSettings;
 using ErrorEventArgs = Gambler.Bot.Common.Events.ErrorEventArgs;
 
@@ -237,6 +238,7 @@ namespace Gambler.Bot.Classes
                     baseSite.StatsUpdated -= BaseSite_StatsUpdated;
                     baseSite.OnBrowserBypassRequired -= BaseSite_OnBrowserBypassRequired;
                     baseSite.OnCFCaptchaBypass -= BaseSite_OnCFCaptchaBypass;
+                    baseSite.ExecJS = MainView.ExecJS;
                     baseSite.Disconnect();                    
                 }
                 baseSite = value;
@@ -497,16 +499,20 @@ namespace Gambler.Bot.Classes
                     secondsPerBet = 1m / BetSettings.BotSpeed;
                 decimal msPerBet = secondsPerBet * 1000m;
                 decimal timetoBet = CurrentSite.TimeToBet(NextBext);
-                while (timetoBet > 0 
-                    || (decimal)(DateTime.Now - MostRecentBetTime).TotalMilliseconds< (NextBext?.BetDelay??0)
-                    || (BetSettings.EnableBotSpeed && (decimal)(DateTime.Now - MostRecentBetTime).TotalMilliseconds < msPerBet)
-                    )
+                decimal TimeSinceLastBet = (decimal)(DateTime.Now - MostRecentBetTime).TotalMilliseconds;
+                decimal maxDelay = System.Math.Max(timetoBet,
+                    NextBext?.BetDelay ?? 0 -TimeSinceLastBet);
+                if (BetSettings.EnableBotSpeed)
+                {
+                    maxDelay = System.Math.Max(maxDelay,msPerBet-TimeSinceLastBet);
+                }
+                maxDelay = System.Math.Max(maxDelay,strategy.GetBetDelay()-TimeSinceLastBet);
+                while (maxDelay > 0 )
                 {
                     
-                    if (timetoBet <= 0)
-                        timetoBet = (10);
-                    Thread.Sleep((int)timetoBet);
-                    timetoBet = 0;
+                    if (maxDelay <= 0)
+                        maxDelay = (10);
+                    Thread.Sleep((int)maxDelay);
                 }
                 return NextBext;
             }
