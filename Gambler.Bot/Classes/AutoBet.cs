@@ -576,6 +576,7 @@ namespace Gambler.Bot.Classes
                         progs.OnBank -= Prog_OnBank;
                         progs.OnResetProfit -= Prog_OnResetProfit;
                         progs.OnResetPartialProfit -= Prog_OnResetPartialProfit;
+                        progs.OnSetBotSpeed -= ProgsOnOnSetBotSpeed;
                     }
                 }
                 strategy = value;
@@ -604,12 +605,19 @@ namespace Gambler.Bot.Classes
                         prog.OnScriptError += Autobet_OnScriptError;
                         prog.OnSetCurrency += Autobet_OnSetCurrency;
                         prog.OnBank += Prog_OnBank;
+                        prog.OnSetBotSpeed += ProgsOnOnSetBotSpeed;
                     }
                 }
                 StoredBetSettings.SetStrategy(value);
                 OnStrategyChanged?.Invoke(this, new EventArgs());
                 
             }
+        }
+
+        private void ProgsOnOnSetBotSpeed(object? sender, SetBotSpeedEventArgs e)
+        {
+            this.BetSettings.EnableBotSpeed = e.Enabled;
+            this.BetSettings.BotSpeed = e.BetsPerSecond;
         }
 
         private void Prog_OnResetPartialProfit(object? sender, EventArgs e)
