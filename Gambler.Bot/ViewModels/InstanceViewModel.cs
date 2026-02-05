@@ -156,17 +156,26 @@ namespace Gambler.Bot.ViewModels
         private async void CreateMediaPlayers()
         {
             _logger.LogDebug("Creating media players");
-            _chime = new MediaPlayer();
-            _chime.LoadedBehavior = MediaPlayerLoadedBehavior.Manual;
-            //await _chime.InitializeAsync();
-            _chime.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/chime.wav"));
-            await _chime.PrepareAsync();
-            //await _chime.PlayAsync();
+            try
+            {
+                _chime = new MediaPlayer();
+                _chime.LoadedBehavior = MediaPlayerLoadedBehavior.Manual;
+                //await _chime.InitializeAsync();
+                _chime.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/chime.wav"));
+                await _chime.PrepareAsync();
+                //await _chime.PlayAsync();
 
-            _alarm = new MediaPlayer();
+                _alarm = new MediaPlayer();
 //            await _alarm.InitializeAsync();
-            _alarm.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/alarm.wav"));
-            await _alarm.PrepareAsync();
+                _alarm.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/alarm.wav"));
+                await _alarm.PrepareAsync();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
             
         }
 
@@ -376,11 +385,19 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             }*/
             try
             {
-                await sound.StopAsync();
-                await sound.PlayAsync();
+                if (sound != null)
+                {
+                    await sound.StopAsync();
+                    await sound.PlayAsync();
+                }
+                else
+                {
+                    _logger.LogWarning("Attempted to play sound without player initialized.");
+                }
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString());
             }
         }
 
