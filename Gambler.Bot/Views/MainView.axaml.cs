@@ -11,6 +11,7 @@ using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -49,6 +50,7 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
             wvBypass.EnvironmentRequested += WvBypass_EnvironmentRequested;
             wvBypass.NavigationStarted += WvBypass_NavigationStarted;
             wvBypass.WebResourceRequested += WvBypass_WebResourceRequested;
+            
             wvBypass.EndInit();
         }
         
@@ -70,6 +72,7 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
     string cookiesheader = "";
     private void WvBypass_WebResourceRequested(object? sender, WebResourceRequestedEventArgs e)
     {
+        Debug.WriteLine(e.Request.Uri.ToString());
         if (args == null)
             return;
         if (e.Request.Uri.ToString().ToLower().Contains(args?.HeadersPath?.ToLower() ?? "ifhcf"))
@@ -273,7 +276,15 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
 
             bc.UserAgent = agent;
             bc.Cookies = cs;
-            if ((foundcookies.Count >= args.RequiredCookies.Length && args.HasTimeout||(DateTime.Now-startDate).TotalSeconds>15) || cts.IsCancellationRequested)
+            if (closeClicked && !string.IsNullOrEmpty(args.PostNavScript ))
+            {
+                await this.internalExecScript(args.PostNavScript);
+               
+                bc.scriptResponse = scriptresult;
+            }
+            if ((foundcookies.Count >= args.RequiredCookies.Length 
+                 || (!string.IsNullOrEmpty(args.PostNavScript) && !string.IsNullOrEmpty(bc.scriptResponse))
+                 || args.HasTimeout&&(DateTime.Now-startDate).TotalSeconds>15) || cts.IsCancellationRequested)
                 _conf = bc;
 
 
@@ -303,7 +314,10 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
                 cookies = new Dictionary<string, Cookie>();
                 instance.IsVisible = false;
                 lblDisclaimer.IsVisible = true;
+                btnDoneBrowser.IsVisible = true;
                 btnCancelBrowser.IsVisible = true;
+                this.closeClicked = false;
+                
                 lblDisclaimer.ZIndex =- 2;
 
                 if (OperatingSystem.IsLinux())
@@ -348,6 +362,8 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
                         lblDisclaimer.IsVisible = false;
                         btnCancelBrowser.IsVisible = false;
                         instance.IsVisible = true;
+                        btnDoneBrowser.IsVisible = false;
+
                     }
                 }
                 else
@@ -377,6 +393,8 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
                         wvBypass.IsVisible = false;
                         lblDisclaimer.IsVisible = false;
                         btnCancelBrowser.IsVisible = false;
+                        btnDoneBrowser.IsVisible = false;
+
                         instance.IsVisible = true;
                     }
                     else
@@ -399,6 +417,9 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
         {
             lblDisclaimer.IsVisible = true;
             btnCancelBrowser.IsVisible = true;
+            btnDoneBrowser.IsVisible = true;
+            this.closeClicked = false;
+
             lblDisclaimer.ZIndex = -2;
             instance.IsVisible = false;
             try
@@ -419,7 +440,32 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
             scriptrunning = false;
         });
     }
+    string scriptresult = "";
+    internal async Task internalExecScript(string script)
+    {
+        scriptrunning = true;
+        scriptresult = "";
+        await Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            lblDisclaimer.IsVisible = true;
+            btnCancelBrowser.IsVisible = true;
+            btnDoneBrowser.IsVisible = true;
+            this.closeClicked = false;
+            lblDisclaimer.ZIndex = -2;
+            instance.IsVisible = false;
+            try
+            {
+                wvBypass.IsVisible = true;
 
+                scriptresult = await wvBypass.InvokeScript(script);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            scriptrunning = false;
+        });
+    }
     internal void closeBrowser()
     {
 
@@ -431,6 +477,8 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
                 wvBypass.IsVisible = false;
                 lblDisclaimer.IsVisible = false;
                 btnCancelBrowser.IsVisible = false;
+                btnDoneBrowser.IsVisible = false;
+
                 instance.IsVisible = true;
             }
             catch (Exception ex)
@@ -476,7 +524,13 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
     {
         cancelled = true;
     }
-
+    bool closeClicked = false;
+    private async void Button_Click_1(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        closeClicked = true;
+        await CheckCookies();
+        closeBrowser();
+    }
     
 }
 public static class ExtensionMethods

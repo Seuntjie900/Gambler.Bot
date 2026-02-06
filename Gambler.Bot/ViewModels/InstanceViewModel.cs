@@ -174,6 +174,18 @@ namespace Gambler.Bot.ViewModels
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                
+                #if LINUX
+                if (e.Message.ToLower().Contains("libvlc"))
+                {
+                    var msgResult = await MessageBox.Show(
+                        $"Could not initialize media players. Please ensure libvlc is installed. Please try: {Environment.NewLine}{Environment.NewLine}" +
+                        $"apt install libvlc{Environment.NewLine}or{Environment.NewLine}dnf install libvlc{Environment.NewLine}{Environment.NewLine}" +
+                        $"Gambler.Bot will continue to run but audio alerts will not work.",
+                        "Failed to create media player",
+                        MessageBoxButtons.OK);
+                }
+                #endif
             }
             
             
