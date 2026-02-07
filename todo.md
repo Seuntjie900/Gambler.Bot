@@ -11,6 +11,9 @@
 - [ ] *Finish crash for ethercrash
 - [ ] Add extra games - _Twist_, _Boom_, keno, plinko, roulette, hilo
 - [x] Bet settings need to get the game settings to accomodate edge etc
+- [x] Move browser to tab in instance view so each instance can have its own browser.
+- [ ] fix browser login
+- [ ] Add browser based integration/betting for when CF is being dumb
 
 	
 ### Tabs

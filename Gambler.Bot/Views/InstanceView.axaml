@@ -30,7 +30,8 @@
              >
 
     <Grid>
-
+<TabControl x:Name="tabs">
+    <TabItem Header="Bot">
         <DockPanel >
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="{DynamicResource Localization.InstanceView.Menu.File}">
@@ -297,7 +298,31 @@
             </Grid>
 
         </DockPanel>
+    </TabItem>
+    <TabItem Header="Browser" IsVisible="{Binding ShowBrowser}">
+        <Grid Name="layoutgrd">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
 
+            <TextBlock Grid.Row="0" x:Name="lblDisclaimer"
+                       Background="{actipro:ThemeResource Container2BackgroundBrush}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       FontSize="24"
+                       MaxWidth="600"
+                       TextWrapping="Wrap"
+                       Text="Please wait while we try to establish a connection to the site."
+                       IsVisible="False"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" >
+                <Button Content="Cancel" Name="btnCancelBrowser" IsVisible="False" />
+                <Button Content="Done" Name="btnDoneBrowser" IsVisible="False" />
+            </StackPanel>
+
+        </Grid>
+    </TabItem>
+</TabControl>
 
     </Grid>
 </UserControl>

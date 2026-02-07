@@ -236,9 +236,9 @@ namespace Gambler.Bot.Classes
                     baseSite.Notify -= BaseSite_Notify;
                     baseSite.RegisterFinished -= BaseSite_RegisterFinished;
                     baseSite.StatsUpdated -= BaseSite_StatsUpdated;
-                    baseSite.OnBrowserBypassRequired -= BaseSite_OnBrowserBypassRequired;
-                    baseSite.OnCFCaptchaBypass -= BaseSite_OnCFCaptchaBypass;
-                    baseSite.ExecJS = MainView.ExecJS;
+                    baseSite.OnBrowserBypassRequired = null;
+                    baseSite.OnCFCaptchaBypass = null;
+                    baseSite.ExecJS = null;
                     baseSite.Disconnect();                    
                 }
                 baseSite = value;
@@ -251,8 +251,9 @@ namespace Gambler.Bot.Classes
                     baseSite.Notify += BaseSite_Notify;
                     baseSite.RegisterFinished += BaseSite_RegisterFinished;
                     baseSite.StatsUpdated += BaseSite_StatsUpdated;
-                    baseSite.OnBrowserBypassRequired += BaseSite_OnBrowserBypassRequired;
-                    baseSite.OnCFCaptchaBypass += BaseSite_OnCFCaptchaBypass;
+                    baseSite.ExecJS = BaseSite_ExecJS;
+                    baseSite.OnBrowserBypassRequired = BaseSite_OnBrowserBypassRequired;
+                    baseSite.OnCFCaptchaBypass = OnCFCaptchaBypass;
                     int tmpcurrency = baseSite.Currencies.FindIndex(x=>x.ToLower() == CurrentCurrency.ToLower());
                     if (tmpcurrency < 0)
                     {
@@ -276,13 +277,19 @@ namespace Gambler.Bot.Classes
                 this.RaisePropertyChanged(nameof(SupportsNormalLogin));
             }
         }
-        private void BaseSite_OnCFCaptchaBypass(object sender, GenericEventArgs e)
+
+        
+        private async Task BaseSite_OnCFCaptchaBypass( string e)
         {
-            OnCFCaptchaBypass?.Invoke(sender, e);
+            await OnCFCaptchaBypass?.Invoke(e);
         }
-        private void BaseSite_OnBrowserBypassRequired(object sender, BypassRequiredArgs e)
+        private async Task<BrowserConfig> BaseSite_OnBrowserBypassRequired(BypassRequiredArgs e)
         {
-            OnBypassRequired?.Invoke(sender, e);
+            return await onBrowserBypassRequired?.Invoke(e);
+        }
+        private async Task<string> BaseSite_ExecJS(string e)
+        {
+            return await ExecJS?.Invoke(e);
         }
 
         private Games currentGame;
@@ -309,8 +316,21 @@ namespace Gambler.Bot.Classes
         public event EventHandler<GetConstringPWEventArgs> NeedKeepassPassword;
         public event EventHandler OnStarted;
         public event EventHandler<GenericEventArgs> OnStopped;
-        public event EventHandler<BypassRequiredArgs> OnBypassRequired;
-        public event EventHandler<GenericEventArgs> OnCFCaptchaBypass;
+        private Func<BypassRequiredArgs, Task<BrowserConfig>> onBrowserBypassRequired;
+        public Func<BypassRequiredArgs, Task<BrowserConfig>> OnBrowserBypassRequired 
+        { 
+            get=>onBrowserBypassRequired;
+            set 
+            { 
+                onBrowserBypassRequired = value;
+                if (this.CurrentSite != null)
+                {
+                    this.CurrentSite.OnBrowserBypassRequired = onBrowserBypassRequired;
+                }
+            }
+        }
+        public  Func<string,Task> OnCFCaptchaBypass;
+        private Func<string, Task<string?>> ExecJS;
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void BaseSite_StatsUpdated(object sender, StatsUpdatedEventArgs e)

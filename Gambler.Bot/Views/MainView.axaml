@@ -17,21 +17,6 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" x:Name="lblDisclaimer"
-                   Background="{actipro:ThemeResource Container2BackgroundBrush}"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Top"
-                   FontSize="24"
-                   MaxWidth="600"
-                   TextWrapping="Wrap"
-                   Text="Please wait while we try to establish a connection to the site."
-                   IsVisible="False"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" >
-            <Button Content="Cancel" Name="btnCancelBrowser" Click="Button_Click" IsVisible="False" />
-            <Button Content="Done" Name="btnDoneBrowser" Click="Button_Click_1" IsVisible="False" />
-        </StackPanel>
-
-
         <ContentControl Name="instance" Grid.Row="0" Grid.RowSpan="2" Content="{Binding Instance}">
             <ContentControl.DataTemplates>
                 <DataTemplate DataType="vm:InstanceViewModel">
