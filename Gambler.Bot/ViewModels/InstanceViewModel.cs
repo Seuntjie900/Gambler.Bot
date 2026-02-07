@@ -64,6 +64,8 @@ namespace Gambler.Bot.ViewModels
         private bool showLiveBets = true;
         private bool showSites = false;
         private bool showStats = true;
+        private bool showBrowser = true;
+        
 
         private string title;
         private DispatcherTimer tmrStats = new DispatcherTimer();
@@ -92,6 +94,8 @@ namespace Gambler.Bot.ViewModels
             StopCommand = ReactiveCommand.Create(Stop);
             ResumeCommand = ReactiveCommand.Create(Resume);
             StopOnWinCommand = ReactiveCommand.Create(StopOnWin);
+            BrowserCancelCommand = ReactiveCommand.Create(BrowserCancel);
+            BrowserDoneCommand = ReactiveCommand.Create(BrowserDone);
 
             LogOutCommand = ReactiveCommand.Create(LogOut);
             ChangeSiteCommand = ReactiveCommand.Create(ChangeSite);
@@ -107,11 +111,15 @@ namespace Gambler.Bot.ViewModels
             SelectSite = new SelectSiteViewModel(_logger);
             SelectSite.SelectedSiteChanged += SelectSite_SelectedSiteChanged;
             IsSelectSiteViewVisible = true;
+            BrowserBypass = new Interaction<BypassRequiredArgs, BrowserConfig>();
+            CFCaptchaBypass = new Interaction<string, Unit?>();
             ShowDialog = new Interaction<LoginViewModel, LoginViewModel?>();
             ShowAbout = new Interaction<AboutViewModel, Unit?>();
             ShowSimulation = new Interaction<SimulationViewModel, SimulationViewModel?>();
             ShowRollVerifier = new Interaction<RollVerifierViewModel, Unit?>();
             ExitInteraction = new Interaction<Unit?, Unit?>();
+            BrowserCancelInteraction = new Interaction<Unit?, Unit?>();
+            BrowserDoneInteraction = new Interaction<Unit?, Unit?>();
             ShowSettings = new Interaction<GlobalSettingsViewModel, Unit?>();
             ShowBetHistory = new Interaction<BetHistoryViewModel, Unit?>();
             ShowNotification = new Interaction<INotification, Unit?>();
@@ -131,8 +139,8 @@ namespace Gambler.Bot.ViewModels
             tmp.OnStopped += BotIns_OnStopped;
             tmp.OnStrategyChanged += BotIns_OnStrategyChanged;
             tmp.OnSiteLoginFinished += BotIns_OnSiteLoginFinished;
-            tmp.OnBypassRequired += Tmp_OnBypassRequired;
-            tmp.OnCFCaptchaBypass += Tmp_OnCFCaptchaBypass;
+            tmp.OnBrowserBypassRequired = Tmp_OnBypassRequired;
+            tmp.OnCFCaptchaBypass = Tmp_OnCFCaptchaBypass;
             tmp.OnSiteNotify += Tmp_OnSiteNotify;
             tmp.OnSiteError += Tmp_OnSiteError;
             tmp.PropertyChanged += Tmp_PropertyChanged;
@@ -143,11 +151,29 @@ namespace Gambler.Bot.ViewModels
             genLiveBetView = new GenericLiveBetViewModel(_logger);
         }
 
-        private void Tmp_OnCFCaptchaBypass(object? sender, GenericEventArgs e)
+        private void BrowserDone()
         {
-            MainView.CFCaptchaBypass(e.Message);
+            
         }
 
+        private void BrowserCancel()
+        {
+            
+        }
+
+        private async Task Tmp_OnCFCaptchaBypass(string e)
+        {
+            try
+            {
+                await CFCaptchaBypass?.Handle(e);
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
+
+       
         private void Tmp_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             this.RaisePropertyChanged(e.PropertyName);
@@ -156,17 +182,38 @@ namespace Gambler.Bot.ViewModels
         private async void CreateMediaPlayers()
         {
             _logger.LogDebug("Creating media players");
-            _chime = new MediaPlayer();
-            _chime.LoadedBehavior = MediaPlayerLoadedBehavior.Manual;
-            //await _chime.InitializeAsync();
-            _chime.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/chime.wav"));
-            await _chime.PrepareAsync();
-            //await _chime.PlayAsync();
+            try
+            {
+                _chime = new MediaPlayer();
+                _chime.LoadedBehavior = MediaPlayerLoadedBehavior.Manual;
+                //await _chime.InitializeAsync();
+                _chime.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/chime.wav"));
+                await _chime.PrepareAsync();
+                //await _chime.PlayAsync();
 
-            _alarm = new MediaPlayer();
+                _alarm = new MediaPlayer();
 //            await _alarm.InitializeAsync();
-            _alarm.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/alarm.wav"));
-            await _alarm.PrepareAsync();
+                _alarm.Source = new UriSource(Path.Combine(Environment.CurrentDirectory, @"Assets/Sounds/alarm.wav"));
+                await _alarm.PrepareAsync();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                
+                #if LINUX
+                if (e.Message.ToLower().Contains("libvlc"))
+                {
+                    var msgResult = await MessageBox.Show(
+                        $"Could not initialize media players. Please ensure libvlc is installed. Please try: {Environment.NewLine}{Environment.NewLine}" +
+                        $"apt install libvlc{Environment.NewLine}or{Environment.NewLine}dnf install libvlc{Environment.NewLine}{Environment.NewLine}" +
+                        $"Gambler.Bot will continue to run but audio alerts will not work.",
+                        "Failed to create media player",
+                        MessageBoxButtons.OK);
+                }
+                #endif
+            }
+            
             
         }
 
@@ -376,11 +423,19 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             }*/
             try
             {
-                await sound.StopAsync();
-                await sound.PlayAsync();
+                if (sound != null)
+                {
+                    await sound.StopAsync();
+                    await sound.PlayAsync();
+                }
+                else
+                {
+                    _logger.LogWarning("Attempted to play sound without player initialized.");
+                }
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.ToString());
             }
         }
 
@@ -448,7 +503,7 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                     tmpStrat = new ProgrammerModeCSViewModel(_logger);
                     break;
                 case "ProgrammerJS":
-                    tmpStrat = new ProgrammerModeCSViewModel(_logger);
+                    tmpStrat = new ProgrammerModeJSViewModel(_logger);
                     break;
                 case "ProgrammerPython":
                     tmpStrat = new ProgrammerModePYViewModel(_logger);
@@ -515,6 +570,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private void Prog_OnReadAdv(object? sender, ReadEventArgs e)
         {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                Dispatcher.UIThread.Invoke(() => Prog_OnReadAdv(sender, e));
+                return;
+            }
             using (var source = new CancellationTokenSource())
             {
                 Read(e).ContinueWith(t => source.Cancel(), TaskScheduler.FromCurrentSynchronizationContext());
@@ -526,6 +586,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private void Prog_OnRead(object? sender, ReadEventArgs e)
         {
+            if (!Dispatcher.UIThread.CheckAccess() )
+            {
+                Dispatcher.UIThread.Invoke(() => Prog_OnRead(sender,e));
+                return;
+            }
             if (e.DataType == 0)
             {
                 e.btncanceltext = "No";
@@ -545,10 +610,19 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         public async Task Read(ReadEventArgs e)
         {
-            UserInputViewModel tmp = new UserInputViewModel(_logger);
-            tmp.Args = e;
+            try
+            {
+                
+                UserInputViewModel tmp = new UserInputViewModel(_logger);
+                tmp.Args = e;
 
-            await ShowUserInput.Handle(tmp);
+                await ShowUserInput.Handle(tmp);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reading user input");
+                ConsoleVM.AddLine("Error reading user input: " + ex.Message);
+            }
         }
 
         private void Prog_OnPrint(object? sender, PrintEventArgs e) { ConsoleVM.AddLine(e.Message); }
@@ -865,7 +939,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         void Stop() { botIns.StopStrategy("Stop button clicked"); }
         void StopOnWin() { botIns.StopOnWin = true; }
 
-        private void Tmp_OnBypassRequired(object? sender, BypassRequiredArgs e) { e.Config = MainView.GetBypass(e); }
+        private async Task<BrowserConfig> Tmp_OnBypassRequired(BypassRequiredArgs e)
+        {
+            e.Config = await BrowserBypass.Handle(e);
+            return e.Config;
+        }
 
         private void Tmp_OnSiteError(object sender, Bot.Common.Events.ErrorEventArgs e)
         {
@@ -1167,7 +1245,9 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                 this.RaisePropertyChanged();
             }
         }
-
+        public Interaction<BypassRequiredArgs?,BrowserConfig> BrowserBypass { get; }
+        public Interaction<string,Unit?> CFCaptchaBypass { get; }
+        
         public Interaction<LoginViewModel, LoginViewModel?> ShowDialog { get; }
 
         public Interaction<AboutViewModel, Unit?> ShowAbout { get; }
@@ -1207,12 +1287,24 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                 this.RaisePropertyChanged();
             }
         }
+        
+        public bool ShowBrowser
+        {
+            get { return showBrowser; }
+            set
+            {
+                showBrowser = value;
+                this.RaisePropertyChanged();
+            }
+        }
 
         public ICommand SimulateCommand { get; }
 
         public SiteStatsViewModel SiteStatsData { get; set; }// = new SiteStatsViewModel();
 
         public ICommand StartCommand { get; set; }
+        public ICommand BrowserDoneCommand { get; set; }
+        public ICommand BrowserCancelCommand { get; set; }
 
         public string StatusMessage
         {
@@ -1278,6 +1370,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         public TriggersViewModel TriggersVM { get; set; }
 
         public Interaction<Unit?, Unit?> ExitInteraction { get; internal set; }
+        public Interaction<Unit?, Unit?> BrowserCancelInteraction { get; internal set; }
+        public Interaction<Unit?, Unit?> BrowserDoneInteraction { get; internal set; }
 
         public Interaction<RollVerifierViewModel, Unit?> ShowRollVerifier { get; internal set; }
 

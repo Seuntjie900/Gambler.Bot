@@ -25,6 +25,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Gambler.Bot.Views;
 using static Gambler.Bot.Classes.PersonalSettings;
 using ErrorEventArgs = Gambler.Bot.Common.Events.ErrorEventArgs;
 
@@ -235,8 +236,9 @@ namespace Gambler.Bot.Classes
                     baseSite.Notify -= BaseSite_Notify;
                     baseSite.RegisterFinished -= BaseSite_RegisterFinished;
                     baseSite.StatsUpdated -= BaseSite_StatsUpdated;
-                    baseSite.OnBrowserBypassRequired -= BaseSite_OnBrowserBypassRequired;
-                    baseSite.OnCFCaptchaBypass -= BaseSite_OnCFCaptchaBypass;
+                    baseSite.OnBrowserBypassRequired = null;
+                    baseSite.OnCFCaptchaBypass = null;
+                    baseSite.ExecJS = null;
                     baseSite.Disconnect();                    
                 }
                 baseSite = value;
@@ -249,8 +251,9 @@ namespace Gambler.Bot.Classes
                     baseSite.Notify += BaseSite_Notify;
                     baseSite.RegisterFinished += BaseSite_RegisterFinished;
                     baseSite.StatsUpdated += BaseSite_StatsUpdated;
-                    baseSite.OnBrowserBypassRequired += BaseSite_OnBrowserBypassRequired;
-                    baseSite.OnCFCaptchaBypass += BaseSite_OnCFCaptchaBypass;
+                    baseSite.ExecJS = BaseSite_ExecJS;
+                    baseSite.OnBrowserBypassRequired = BaseSite_OnBrowserBypassRequired;
+                    baseSite.OnCFCaptchaBypass = OnCFCaptchaBypass;
                     int tmpcurrency = baseSite.Currencies.FindIndex(x=>x.ToLower() == CurrentCurrency.ToLower());
                     if (tmpcurrency < 0)
                     {
@@ -274,13 +277,19 @@ namespace Gambler.Bot.Classes
                 this.RaisePropertyChanged(nameof(SupportsNormalLogin));
             }
         }
-        private void BaseSite_OnCFCaptchaBypass(object sender, GenericEventArgs e)
+
+        
+        private async Task BaseSite_OnCFCaptchaBypass( string e)
         {
-            OnCFCaptchaBypass?.Invoke(sender, e);
+            await OnCFCaptchaBypass?.Invoke(e);
         }
-        private void BaseSite_OnBrowserBypassRequired(object sender, BypassRequiredArgs e)
+        private async Task<BrowserConfig> BaseSite_OnBrowserBypassRequired(BypassRequiredArgs e)
         {
-            OnBypassRequired?.Invoke(sender, e);
+            return await onBrowserBypassRequired?.Invoke(e);
+        }
+        private async Task<string> BaseSite_ExecJS(string e)
+        {
+            return await ExecJS?.Invoke(e);
         }
 
         private Games currentGame;
@@ -307,8 +316,21 @@ namespace Gambler.Bot.Classes
         public event EventHandler<GetConstringPWEventArgs> NeedKeepassPassword;
         public event EventHandler OnStarted;
         public event EventHandler<GenericEventArgs> OnStopped;
-        public event EventHandler<BypassRequiredArgs> OnBypassRequired;
-        public event EventHandler<GenericEventArgs> OnCFCaptchaBypass;
+        private Func<BypassRequiredArgs, Task<BrowserConfig>> onBrowserBypassRequired;
+        public Func<BypassRequiredArgs, Task<BrowserConfig>> OnBrowserBypassRequired 
+        { 
+            get=>onBrowserBypassRequired;
+            set 
+            { 
+                onBrowserBypassRequired = value;
+                if (this.CurrentSite != null)
+                {
+                    this.CurrentSite.OnBrowserBypassRequired = onBrowserBypassRequired;
+                }
+            }
+        }
+        public  Func<string,Task> OnCFCaptchaBypass;
+        private Func<string, Task<string?>> ExecJS;
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void BaseSite_StatsUpdated(object sender, StatsUpdatedEventArgs e)
@@ -497,16 +519,20 @@ namespace Gambler.Bot.Classes
                     secondsPerBet = 1m / BetSettings.BotSpeed;
                 decimal msPerBet = secondsPerBet * 1000m;
                 decimal timetoBet = CurrentSite.TimeToBet(NextBext);
-                while (timetoBet > 0 
-                    || (decimal)(DateTime.Now - MostRecentBetTime).TotalMilliseconds< (NextBext?.BetDelay??0)
-                    || (BetSettings.EnableBotSpeed && (decimal)(DateTime.Now - MostRecentBetTime).TotalMilliseconds < msPerBet)
-                    )
+                decimal TimeSinceLastBet = (decimal)(DateTime.Now - MostRecentBetTime).TotalMilliseconds;
+                decimal maxDelay = System.Math.Max(timetoBet,
+                    NextBext?.BetDelay ?? 0 -TimeSinceLastBet);
+                if (BetSettings.EnableBotSpeed)
+                {
+                    maxDelay = System.Math.Max(maxDelay,msPerBet-TimeSinceLastBet);
+                }
+                maxDelay = System.Math.Max(maxDelay,strategy.GetBetDelay()-TimeSinceLastBet);
+                if (maxDelay > 0 )
                 {
                     
-                    if (timetoBet <= 0)
-                        timetoBet = (10);
-                    Thread.Sleep((int)timetoBet);
-                    timetoBet = 0;
+                    
+                    Thread.Sleep((int)maxDelay);
+                    maxDelay = 0;
                 }
                 return NextBext;
             }
@@ -570,6 +596,7 @@ namespace Gambler.Bot.Classes
                         progs.OnBank -= Prog_OnBank;
                         progs.OnResetProfit -= Prog_OnResetProfit;
                         progs.OnResetPartialProfit -= Prog_OnResetPartialProfit;
+                        progs.OnSetBotSpeed -= ProgsOnOnSetBotSpeed;
                     }
                 }
                 strategy = value;
@@ -598,12 +625,19 @@ namespace Gambler.Bot.Classes
                         prog.OnScriptError += Autobet_OnScriptError;
                         prog.OnSetCurrency += Autobet_OnSetCurrency;
                         prog.OnBank += Prog_OnBank;
+                        prog.OnSetBotSpeed += ProgsOnOnSetBotSpeed;
                     }
                 }
                 StoredBetSettings.SetStrategy(value);
                 OnStrategyChanged?.Invoke(this, new EventArgs());
                 
             }
+        }
+
+        private void ProgsOnOnSetBotSpeed(object? sender, SetBotSpeedEventArgs e)
+        {
+            this.BetSettings.EnableBotSpeed = e.Enabled;
+            this.BetSettings.BotSpeed = e.BetsPerSecond;
         }
 
         private void Prog_OnResetPartialProfit(object? sender, EventArgs e)
@@ -732,28 +766,31 @@ namespace Gambler.Bot.Classes
 
             CurrentSite.ActiveActions.Clear();
             ActiveErrors.Clear();
-            
+
             if (!Running && !RunningSimulation)
             {
-                if (Strategy is IProgrammerMode prog)
+                Task.Run(() =>
                 {
-                    prog.SetSimulation(false);
-                    
-                    prog.UpdateSessionStats(CopyHelper.CreateCopy<SessionStats>(Stats));
-                    prog.UpdateSiteStats(CopyHelper.CreateCopy<SiteStats>(CurrentSite.Stats));
-                    prog.UpdateSite(CurrentSite.SiteDetails, baseSite.CurrentCurrency);
-                    prog.LoadScript();
+                    if (Strategy is IProgrammerMode prog)
+                    {
+                        prog.SetSimulation(false);
 
-                }
-                Running = true;
-                if (Stats == null)
-                    Stats = new SessionStats();
-                Stats.StartTime = DateTime.Now;
-                //Indicate to the selected strategy to create a working set and start betting.
-                OnStarted?.Invoke(this, new EventArgs());
-                MostRecentBetTime = DateTime.Now;
-                BetTimer.Enabled = true;
-                RunningThread = RunBot();
+                        prog.UpdateSessionStats(CopyHelper.CreateCopy<SessionStats>(Stats));
+                        prog.UpdateSiteStats(CopyHelper.CreateCopy<SiteStats>(CurrentSite.Stats));
+                        prog.UpdateSite(CurrentSite.SiteDetails, baseSite.CurrentCurrency);
+                        prog.LoadScript();
+
+                    }
+                    Running = true;
+                    if (Stats == null)
+                        Stats = new SessionStats();
+                    Stats.StartTime = DateTime.Now;
+                    //Indicate to the selected strategy to create a working set and start betting.
+                    OnStarted?.Invoke(this, new EventArgs());
+                    MostRecentBetTime = DateTime.Now;
+                    BetTimer.Enabled = true;
+                    RunningThread = RunBot();
+                });
                 
             }
             /*

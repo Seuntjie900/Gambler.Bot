@@ -29,7 +29,6 @@
     <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
     <PackageReference Include="Avalonia.Controls.MediaPlayer" Version="11.2.1" />
     <PackageReference Include="Avalonia.Controls.WebView" Version="11.3.3" />
-    <PackageReference Include="Avalonia.Svg" Version="11.3.0" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.1" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
@@ -67,7 +66,8 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="SpacedGrid-Avalonia" Version="11.0.0" />
-    <PackageReference Include="Svg.Skia" Version="3.0.3" />
+    <PackageReference Include="Svg.Controls.Avalonia" Version="11.3.0.4" />
+    <PackageReference Include="Svg.Skia" Version="3.4.1" />
     <PackageReference Include="TextMateSharp.Grammars" Version="1.0.69" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
@@ -1611,7 +1611,7 @@
 	  <AvaloniaResource Update="Assets\Images\Sites\windice.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AvaloniaResource>
-	  <AvaloniaResource Update="Assets\Images\Sites\wolf.bet.png">
+	  <AvaloniaResource Update="Assets\Images\Sites\wolfbet.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AvaloniaResource>
 	  <AvaloniaResource Update="Assets\Sounds\alarm.wav">

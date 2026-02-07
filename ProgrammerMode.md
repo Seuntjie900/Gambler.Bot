@@ -3,17 +3,17 @@
 ## Process
 
 
-Like previous versions, Gambler.Bot’s programmer mode runs in a loop. When the users starts the bot, the bot executes the Reset function (detailed below) for the applicable game. The NextBet parameter from the reset function will be used as the first bet. Once the bet result for the first bet is received from the site, the bot will do its internal processing (like logging it to the database, sending it to the GUI etc). Once all internal processing is completed, the global variables for the programmer mode is updated (this includes the stats, sitedetails and sitestats objects). The DoDiceBet function is then called using three paramters:
+Like previous versions, Gambler.Bot’s programmer mode runs in a loop. When the users starts the bot, the bot executes the Reset function (detailed below) for the applicable game. The NextBet parameter from the reset function will be used as the first bet. Once the bet result for the first bet is received from the site, the bot will do its internal processing (like logging it to the database, sending it to the GUI etc). Once all internal processing is completed, the global variables for the programmer mode is updated (this includes the stats, sitedetails and sitestats objects). The CalculateBet function is then called. You have access to:
 - PreviousBet: result of the previous bet, includes betamount, profit, roll, betid. Full UML for class available in this document.
 - Win: a boolean called that indicates whether the previous bet is seen as a win internally or not, 
-- NextBet: An Instance of the PlaceDiceBet class, with the amount, chance and high values copied from the previous bet. This object is used to place the next bet, so set the properties of this class to manipulate the next bet.
+- NextBet: An Instance of the specific PlaceBet class used for the game, with the amount, and game specific values copied from the previous bet. This object is used to place the next bet, so set the properties of this class to manipulate the next bet.
 
 ## Required functions
 For a script to be valid, it MUST implement the following functions:
-- Void CalculateBet(Bet PreviousBet, bool Win, PlaceBet NextBet)
-- Reset(PlaceBet NextBet)
+- Void CalculateBet()
+- Reset()
 
-CalculateBet is the function that handles the core of your logic. It gets called when a bet result has been received and the next bet needs to be calculated. The NextBet parameter is used to send the bet to the site, and must thus be used to specify the bet details needed.
+CalculateBet is the function that handles the core of your logic. It gets called when a bet result has been received and the next bet needs to be calculated. The NextBet variable is used to send the bet to the site, and must thus be used to specify the bet details needed.
 
 Reset is called when the script starts and the result is used for the first bet. It can be used in CalculateBet to reset your script easily, and will be called from Gambler.Bot if internal triggers or error handling is used and set to reset. It is recommended that any variables that might influence the functionality of your script be reset to their definition/instantiation values in this function. The NextBet parameter is used to send the bet to the site, and must thus be used to specify the bet details needed.
 
@@ -46,12 +46,13 @@ There are internal functions available for the programmer modes, to access featu
 - Void Ching()
 - Void ResetBuiltIn()
 - Void ExportSim(string FileName)
+- Void Stop()
 
 ## Legacy support
 
 Gambler.Bot aims to support legacy scripts from version 3 and partially from the unofficial version 4. To use a legacy script, just select the Programmer Lua mode and use as usual. If the v5 script definitions are available, the bot will prefer them but fall back to legacy scripts when not available.
 
-Legacy features that will not break the script but will perform now action when called:
+Legacy features that will not break the script but will perform no action when called:
 - resetbuiltin
 
 Legacy features that will break the script if called:
