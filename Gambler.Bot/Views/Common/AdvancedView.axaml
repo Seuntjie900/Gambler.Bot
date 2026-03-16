@@ -60,6 +60,24 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate x:DataType="vm:AdvancedViewModel">
                         <Grid>
+                            <TextBlock Text="{DynamicResource Localization.Common.Advanced.MinMax}" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+                <Grid RowDefinitions="*,*,*,*,*,*,*" ColumnDefinitions="25,80,3*,2*">
+                    <CheckBox IsChecked="{Binding BetSettings.EnableMinBet}" Margin="1" Grid.Row="0" Grid.Column="0"/>
+                    <TextBlock VerticalAlignment="Center" Text="{DynamicResource Localization.Common.MinBet}" Margin="1" Grid.Row="0" Grid.Column="1"/>
+                    <NumericUpDown Value="{Binding BetSettings.MinBet}" Margin="1" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Stretch"/>
+                    <CheckBox IsChecked="{Binding BetSettings.EnableMaxBet}" Margin="1" Grid.Row="0" Grid.Column="0"/>
+                    <TextBlock VerticalAlignment="Center" Text="{DynamicResource Localization.Common.MaxBet}" Margin="1" Grid.Row="0" Grid.Column="1"/>
+                    <NumericUpDown Value="{Binding BetSettings.MaxBet}" Margin="1" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Stretch"/>
+                </Grid>
+
+            </Expander>
+            <Expander Margin="2"  IsExpanded="True" Header="{Binding}"  >
+                <Expander.HeaderTemplate>
+                    <DataTemplate x:DataType="vm:AdvancedViewModel">
+                        <Grid>
                             <TextBlock Text="{DynamicResource Localization.Common.Advanced.ResetSeed}" HorizontalAlignment="Center"/>
                         </Grid>
                     </DataTemplate>
@@ -100,8 +118,6 @@
                     <NumericUpDown FormatString="n8"  Value="{Binding BetSettings.ResetSeedLoss}" Margin="1" Grid.Row="6" Grid.Column="2" HorizontalAlignment="Stretch"/>
                     <TextBlock VerticalAlignment="Center" Text="{DynamicResource Localization.Common.Loss}" Margin="1" Grid.Row="6" Grid.Column="3"/>
                 </Grid>
-
-
             </Expander>
             <Expander Margin="2"  IsExpanded="True" Header="{Binding}"  >
                 <Expander.HeaderTemplate>

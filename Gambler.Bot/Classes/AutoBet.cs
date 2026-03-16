@@ -512,6 +512,15 @@ namespace Gambler.Bot.Classes
                 NextBext = Strategy.CalculateNextBet(MostRecentBet, win);
             if (NextBext.Game != CurrentGame)
                 CurrentGame = NextBext.Game;
+            if (BetSettings.EnableMaxBet && NextBext.Amount > BetSettings.MaxBet)
+            {
+                NextBext.Amount = BetSettings.MaxBet;
+            }
+
+            if (BetSettings.EnableMinBet && NextBext.Amount < BetSettings.MinBet)
+            {
+                NextBext.Amount = BetSettings.MinBet;
+            }
             if (Running)
             {
                 decimal secondsPerBet = 0;

@@ -67,6 +67,9 @@
     <system:String x:Key="Localization.Common.LoggingIn">Logging in...</system:String>
     <system:String x:Key="Localization.Common.LoginFailed">Failed to log in</system:String>
     <system:String x:Key="Localization.Common.Filters">More filters and settings coming soon (tm)</system:String>
+    <system:String x:Key="Localization.Common.MinMax">Minimum/Maximum bet</system:String>
+    <system:String x:Key="Localization.Common.MinBet">Min bet</system:String>
+    <system:String x:Key="Localization.Common.MaxBet">Max bet</system:String>
     <system:String x:Key="Localization.Common.Advanced.BotSpeed">Bot Speed</system:String>
     <system:String x:Key="Localization.Common.Advanced.BetsPS">Bets per second</system:String>
     <system:String x:Key="Localization.Common.Advanced.UpperLimit">Upper Limit</system:String>
