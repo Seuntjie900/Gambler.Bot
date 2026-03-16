@@ -60,17 +60,17 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate x:DataType="vm:AdvancedViewModel">
                         <Grid>
-                            <TextBlock Text="{DynamicResource Localization.Common.Advanced.MinMax}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource Localization.Common.MinMax}" HorizontalAlignment="Center"/>
                         </Grid>
                     </DataTemplate>
                 </Expander.HeaderTemplate>
-                <Grid RowDefinitions="*,*,*,*,*,*,*" ColumnDefinitions="25,80,3*,2*">
+                <Grid RowDefinitions="*,*" ColumnDefinitions="25,80,*">
                     <CheckBox IsChecked="{Binding BetSettings.EnableMinBet}" Margin="1" Grid.Row="0" Grid.Column="0"/>
                     <TextBlock VerticalAlignment="Center" Text="{DynamicResource Localization.Common.MinBet}" Margin="1" Grid.Row="0" Grid.Column="1"/>
                     <NumericUpDown Value="{Binding BetSettings.MinBet}" Margin="1" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Stretch"/>
-                    <CheckBox IsChecked="{Binding BetSettings.EnableMaxBet}" Margin="1" Grid.Row="0" Grid.Column="0"/>
-                    <TextBlock VerticalAlignment="Center" Text="{DynamicResource Localization.Common.MaxBet}" Margin="1" Grid.Row="0" Grid.Column="1"/>
-                    <NumericUpDown Value="{Binding BetSettings.MaxBet}" Margin="1" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Stretch"/>
+                    <CheckBox IsChecked="{Binding BetSettings.EnableMaxBet}" Margin="1" Grid.Row="1" Grid.Column="0"/>
+                    <TextBlock VerticalAlignment="Center" Text="{DynamicResource Localization.Common.MaxBet}" Margin="1" Grid.Row="1" Grid.Column="1"/>
+                    <NumericUpDown Value="{Binding BetSettings.MaxBet}" Margin="1" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch"/>
                 </Grid>
 
             </Expander>
