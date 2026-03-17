@@ -30,8 +30,9 @@
     <system:String x:Key="Localization.InstanceView.Menu.WrittenTutorials">Written Tutorials</system:String>
     <system:String x:Key="Localization.InstanceView.Status">Status: </system:String>
     <system:String x:Key="Localization.InstanceView.LastAction">Last Action:</system:String>
-    <system:String x:Key="Localization.Common.Advanced.AutoWith">Auto withdraw/tip</system:String>
-    <system:String x:Key="Localization.Common.Strategy">Strategy</system:String>
+    <system:String x:Key="Localization.Common.Advanced.AutoWith">Auto withdraw/tip</system:String
+	<system:String x:Key="Localization.Common.Advanced.ZigZag">Zig Zag/High low</system:String
+	<system:String x:Key="Localization.Common.Strategy">Strategy</system:String>
     <system:String x:Key="Localization.Common.ResetSettings">Reset settings</system:String>
     <system:String x:Key="Localization.Common.AdvancedSettings">Advanced settings</system:String>
     <system:String x:Key="Localization.Common.CustomTriggers">Custom triggers</system:String>
@@ -67,6 +68,9 @@
     <system:String x:Key="Localization.Common.LoggingIn">Logging in...</system:String>
     <system:String x:Key="Localization.Common.LoginFailed">Failed to log in</system:String>
     <system:String x:Key="Localization.Common.Filters">More filters and settings coming soon (tm)</system:String>
+    <system:String x:Key="Localization.Common.MinMax">Minimum/Maximum bet</system:String>
+    <system:String x:Key="Localization.Common.MinBet">Min bet</system:String>
+    <system:String x:Key="Localization.Common.MaxBet">Max bet</system:String>
     <system:String x:Key="Localization.Common.Advanced.BotSpeed">Bot Speed</system:String>
     <system:String x:Key="Localization.Common.Advanced.BetsPS">Bets per second</system:String>
     <system:String x:Key="Localization.Common.Advanced.UpperLimit">Upper Limit</system:String>

@@ -512,6 +512,15 @@ namespace Gambler.Bot.Classes
                 NextBext = Strategy.CalculateNextBet(MostRecentBet, win);
             if (NextBext.Game != CurrentGame)
                 CurrentGame = NextBext.Game;
+            if (BetSettings.EnableMaxBet && NextBext.Amount > BetSettings.MaxBet)
+            {
+                NextBext.Amount = BetSettings.MaxBet;
+            }
+
+            if (BetSettings.EnableMinBet && NextBext.Amount < BetSettings.MinBet)
+            {
+                NextBext.Amount = BetSettings.MinBet;
+            }
             if (Running)
             {
                 decimal secondsPerBet = 0;
@@ -935,6 +944,10 @@ namespace Gambler.Bot.Classes
                             if (CurrentSite.CanChangeSeed)
                                 await CurrentSite.ResetSeed("");
                         }
+                        if (BetSettings.CheckHighLow(MostRecentBet, win, Stats, out NewHigh, SiteStats))
+                        {
+                            (strategy as iDiceStrategy).High = NewHigh;
+                        }
                         if (Running)
                         {
                             if (!Reset)
@@ -944,6 +957,7 @@ namespace Gambler.Bot.Classes
                                 StopStrategy("Strategy failed to generate next bet.");
                                 return;
                             }
+                            
                             await PlaceBet(NextBext);
                         }
                     }
