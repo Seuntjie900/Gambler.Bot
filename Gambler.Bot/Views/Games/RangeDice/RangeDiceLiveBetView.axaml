@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Gambler.Bot.Views.Games.Dice.DiceLiveBetView"
+             xmlns:vm="using:Gambler.Bot.ViewModels.Games.Dice"
+             xmlns:common="using:Gambler.Bot.ViewModels"
+             xmlns:commonViews="using:Gambler.Bot.Views"
+             x:DataType="vm:RangeDiceLiveBetViewModel"
+             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+             xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
+             xmlns:converters="using:Gambler.Bot.Converters"
+             xmlns:games="using:Bot.Common.Games"
+             >
+    <UserControl.Resources>
+        <converters:BoolToColourConverter x:Key="RowConverter" />
+        <converters:DiceForegroundColourConverter x:Key="DiceConverter" />
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="DataGridRow">
+            <Setter Property="Background" Value="{Binding  Converter={StaticResource RowConverter}}" />
+        </Style>
+    </UserControl.Styles>
+    <DataGrid ItemsSource="{Binding Bets}" IsReadOnly="True"  >
+        <DataGrid.Columns>
+            <DataGridTextColumn Binding="{Binding BetID}" Header="{DynamicResource Localization.Game.BetId}"/>
+            <DataGridTextColumn Binding="{Binding DateValue}" Header="{DynamicResource Localization.Game.Time}"/>
+            <DataGridTextColumn Binding="{Binding TotalAmount}" Header="{DynamicResource Localization.Game.Amount}"/>
+          <DataGridTextColumn Binding="{Binding Currency}" Header="{DynamicResource Localization.Common.Currency}"/>
+            <DataGridCheckBoxColumn Binding="{Binding High}" Header="{DynamicResource Localization.Games.Dice.High}"/>
+            <DataGridTextColumn Binding="{Binding Chance}" Header="{DynamicResource Localization.Games.Dice.Chance}"/>
+            <DataGridTemplateColumn Header="{DynamicResource Localization.Games.Dice.Roll}"  >
+                <DataTemplate >
+                    <Grid>
+                        <Grid.Background>
+                            <MultiBinding Converter="{StaticResource DiceConverter}">
+                                <Binding Path="."  RelativeSource="{RelativeSource AncestorType={x:Type DataGridRow}}" />
+
+                                <!-- Use RelativeSource to bind to the DataGrid's ViewModel -->
+                                <Binding Path="((common:InstanceViewModel)DataContext).BotInstance.CurrentSite" RelativeSource="{RelativeSource AncestorType={x:Type commonViews:InstanceView}}" />
+                            </MultiBinding>
+                        </Grid.Background>
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Text="{Binding Roll, StringFormat=#0.00##}"/>
+                    </Grid>
+                </DataTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Binding="{Binding Profit}" Header="{DynamicResource Localization.Common.Profit}"/>
+            <DataGridTextColumn Binding="{Binding Nonce}" Header="{DynamicResource Localization.Common.RollVerify.Nonce}"/>
+        </DataGrid.Columns>
+
+
+    </DataGrid>
+</UserControl>
