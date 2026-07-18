@@ -1,10 +1,10 @@
 using Avalonia.Controls;
 
-namespace Gambler.Bot.Views.Games.Dice
+namespace Gambler.Bot.Views.Games.RangeDice
 {
-    public partial class DiceLiveBetView : UserControl
+    public partial class RangeDiceLiveBetView : UserControl
     {
-        public DiceLiveBetView()
+        public RangeDiceLiveBetView()
         {
             InitializeComponent();
         }

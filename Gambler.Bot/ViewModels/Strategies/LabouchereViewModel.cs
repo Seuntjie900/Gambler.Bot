@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games;
 
 namespace Gambler.Bot.ViewModels.Strategies
 {

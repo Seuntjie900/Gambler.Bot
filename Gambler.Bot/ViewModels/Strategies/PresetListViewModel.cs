@@ -9,7 +9,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
-using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games;
 
 namespace Gambler.Bot.ViewModels.Strategies
 {

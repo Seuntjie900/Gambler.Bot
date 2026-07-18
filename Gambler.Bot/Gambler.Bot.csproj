@@ -1635,6 +1635,27 @@
 	  <Compile Update="Views\Games\Twist\TwistLiveBetView.axaml.cs">
 	    <DependentUpon>TwistLiveBetView.axaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\Games\RangeDice\RangeDiceLiveBetView.axaml.cs">
+	    <DependentUpon>RangeDiceLiveBetView.axaml</DependentUpon>
+	    <SubType>Code</SubType>
+	  </Compile>
+	  <Compile Update="Views\Games\RangeDice\RangeDicePlaceBetView.axaml.cs">
+	    <DependentUpon>RangeDicePlaceBetView.axaml</DependentUpon>
+	    <SubType>Code</SubType>
+	  </Compile>
+	  <Compile Update="Views\Games\RangeDice\RangeDiceLiveBetView.axaml.cs">
+	    <DependentUpon>DiceLiveBetView.axaml</DependentUpon>
+	    <SubType>Code</SubType>
+	  </Compile>
+	  <Compile Update="Views\Games\RangeDice\RangeDicePlaceBetView.axaml.cs">
+	    <DependentUpon>DicePlaceBetView.axaml</DependentUpon>
+	    <SubType>Code</SubType>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AdditionalFiles Include="Views\Games\RangeDice\RangeDiceLiveBetView.axaml" />
+	  <AdditionalFiles Include="Views\Games\RangeDice\RangeDicePlaceBetView.axaml" />
 	</ItemGroup>
 
 	

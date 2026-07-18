@@ -3,8 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Gambler.Bot.Views.Games.Dice.DiceLiveBetView"
-             xmlns:vm="using:Gambler.Bot.ViewModels.Games.Dice"
+             x:Class="Gambler.Bot.Views.Games.RangeDice.RangeDiceLiveBetView"
+             xmlns:vm="using:Gambler.Bot.ViewModels.Games.RangeDice"
              xmlns:common="using:Gambler.Bot.ViewModels"
              xmlns:commonViews="using:Gambler.Bot.Views"
              x:DataType="vm:RangeDiceLiveBetViewModel"
@@ -28,22 +28,13 @@
             <DataGridTextColumn Binding="{Binding DateValue}" Header="{DynamicResource Localization.Game.Time}"/>
             <DataGridTextColumn Binding="{Binding TotalAmount}" Header="{DynamicResource Localization.Game.Amount}"/>
           <DataGridTextColumn Binding="{Binding Currency}" Header="{DynamicResource Localization.Common.Currency}"/>
-            <DataGridCheckBoxColumn Binding="{Binding High}" Header="{DynamicResource Localization.Games.Dice.High}"/>
-            <DataGridTextColumn Binding="{Binding Chance}" Header="{DynamicResource Localization.Games.Dice.Chance}"/>
+            <DataGridCheckBoxColumn Binding="{Binding Type}" Header="{DynamicResource Localization.Games.Dice.High}"/>
+            <DataGridTextColumn Binding="{Binding Range}" Header="{DynamicResource Localization.Games.RangeDice.Range}"/>
+            
+            
+            
             <DataGridTemplateColumn Header="{DynamicResource Localization.Games.Dice.Roll}"  >
-                <DataTemplate >
-                    <Grid>
-                        <Grid.Background>
-                            <MultiBinding Converter="{StaticResource DiceConverter}">
-                                <Binding Path="."  RelativeSource="{RelativeSource AncestorType={x:Type DataGridRow}}" />
-
-                                <!-- Use RelativeSource to bind to the DataGrid's ViewModel -->
-                                <Binding Path="((common:InstanceViewModel)DataContext).BotInstance.CurrentSite" RelativeSource="{RelativeSource AncestorType={x:Type commonViews:InstanceView}}" />
-                            </MultiBinding>
-                        </Grid.Background>
-                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Text="{Binding Roll, StringFormat=#0.00##}"/>
-                    </Grid>
-                </DataTemplate>
+                
             </DataGridTemplateColumn>
             <DataGridTextColumn Binding="{Binding Profit}" Header="{DynamicResource Localization.Common.Profit}"/>
             <DataGridTextColumn Binding="{Binding Nonce}" Header="{DynamicResource Localization.Common.RollVerify.Nonce}"/>

@@ -1,13 +1,13 @@
 ﻿using Gambler.Bot.Classes.BetsPanel;
 using Gambler.Bot.Common.Games;
-using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.RangeDice;
 using ReactiveUI;
 using System;
 using System.Windows.Input;
 
-namespace Gambler.Bot.ViewModels.Games.Dice
+namespace Gambler.Bot.ViewModels.Games.RangeDice
 {
-    public class DicePlaceBetViewModel :ViewModelBase, iPlaceBet
+    public class RangeDicePlaceBetViewModel :ViewModelBase, iPlaceBet
     {
         private bool _showAmount=true;
 
@@ -24,30 +24,7 @@ namespace Gambler.Bot.ViewModels.Games.Dice
             set { _showChance = value; this.RaisePropertyChanged(); }
         }
 
-        private bool _highChecked;
-
-        public bool HighChecked
-        {
-            get { return _highChecked; }
-            set { _highChecked = value; this.RaisePropertyChanged(); this.RaisePropertyChanged(nameof(LowChecked)); }
-        }
-
-        private bool showHighLow=true;
-
-        public bool ShowHighLow
-        {
-            get { return showHighLow; }
-            set { showHighLow = value; this.RaisePropertyChanged(); this.RaisePropertyChanged(nameof(ShowButton)); this.RaisePropertyChanged(nameof(ShowToggle)); }
-        }
-
-
-
-        public bool LowChecked
-        {
-            get { return !HighChecked; }
-            set { HighChecked = !value; }
-        }
-
+        
         public ICommand BetHighCommand { get; }
         public ICommand BetLowCommand { get; }
 
@@ -89,14 +66,45 @@ namespace Gambler.Bot.ViewModels.Games.Dice
             get { return profit; }
             set { profit = value; this.RaisePropertyChanged(nameof(Profit)); Calculate(nameof(Profit)); }
         }
+        private decimal min=25m;
 
-
-
-        public DicePlaceBetViewModel(Microsoft.Extensions.Logging.ILogger logger) : base(logger)
+        public decimal Min
         {
-            BetHighCommand = ReactiveCommand.Create(BetHigh);
-            BetLowCommand = ReactiveCommand.Create(BetLow);
+            get { return min; }
+            set { min = value; this.RaisePropertyChanged(nameof(Min)); Calculate(nameof(Min)); }
+        }
+        private decimal max=75m;
 
+        public decimal Max
+        {
+            get { return max; }
+            set { max = value; this.RaisePropertyChanged(nameof(Max)); Calculate(nameof(Max)); }
+        }
+        private decimal min2=25m;
+
+        public decimal Min2
+        {
+            get { return min2; }
+            set { min2 = value; this.RaisePropertyChanged(nameof(Min2)); Calculate(nameof(Min2)); }
+        }
+        private decimal max2=75m;
+
+        public decimal Max2
+        {
+            get { return max2; }
+            set { max2 = value; this.RaisePropertyChanged(nameof(Max2)); Calculate(nameof(Max2)); }
+        }
+        private RangeDiceType type= RangeDiceType.In  ;
+
+        public RangeDiceType Type
+        {
+            get { return type; }
+            set { type = value; this.RaisePropertyChanged(nameof(Type)); Calculate(nameof(Type)); }
+        }
+        
+
+        public RangeDicePlaceBetViewModel(Microsoft.Extensions.Logging.ILogger logger) : base(logger)
+        {
             DoubleAmountCommand = ReactiveCommand.Create(DoubleAmount);
             HalfAmountCommand = ReactiveCommand.Create(HalveAmount);
             DoubleChanceCommand = ReactiveCommand.Create(DoubleChance);
@@ -175,38 +183,23 @@ namespace Gambler.Bot.ViewModels.Games.Dice
             }
         }
 
-        private bool showToggle=false;
-
-        public bool ShowToggle
-        {
-            get { return showToggle && showHighLow; }
-            set { showToggle = value; this.RaisePropertyChanged();this.RaisePropertyChanged(nameof(ShowButton)); }
-        }
-
-        public bool ShowButton { get=>!ShowToggle && showHighLow; }
+      
         public IGameConfig GameSettings { get; set; }
 
         public virtual Bot.Common.Games.Games Game => Bot.Common.Games.Games.Dice;
 
         public virtual event EventHandler<PlaceBetEventArgs> PlaceBet;
 
-        protected virtual void Bet(bool High)
+        protected virtual void Bet()
         {
-            PlaceBet?.Invoke(this, new PlaceBetEventArgs(new PlaceDiceBet(Amount, High, Chance)));
+            PlaceBet?.Invoke(this, new PlaceBetEventArgs(new PlaceRangeDiceBet(Type, 
+                Amount, min, max,min2,max2)));
         }
 
-        private void BetHigh()
-        {
-            Bet(true);
-        }
-        private void BetLow()
-        {
-            Bet(false);
-        }
 
         public void BetCommand()
         {
-            Bet(HighChecked);
+            Bet();
         }
     }
 }

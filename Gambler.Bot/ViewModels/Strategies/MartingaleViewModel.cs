@@ -9,7 +9,7 @@ using System.ComponentModel;
 using static Gambler.Bot.Core.Sites.WolfBet;
 using System.Collections.Generic;
 using Gambler.Bot.Helpers;
-using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games;
 using ShimSkiaSharp;
 
 namespace Gambler.Bot.ViewModels.Strategies

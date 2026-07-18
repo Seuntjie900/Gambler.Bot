@@ -3,8 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Gambler.Bot.Views.Games.Dice.DicePlaceBetView"
-             xmlns:vm="using:Gambler.Bot.ViewModels.Games.Dice"
+             x:Class="Gambler.Bot.Views.Games.RangeDice.RangeDicePlaceBetView"
+             xmlns:vm="using:Gambler.Bot.ViewModels.Games.RangeDice"
              x:DataType="vm:RangeDicePlaceBetViewModel"
              xmlns:img="https://github.com/projektanker/icons.avalonia">
 	<StackPanel Orientation="Vertical">
@@ -13,7 +13,6 @@
 		</StackPanel>
     <Grid ColumnDefinitions="Auto,2*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
         <TextBlock IsVisible="{Binding ShowAmount}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" Text="{DynamicResource Localization.Common.Bet}" />
-        <TextBlock IsVisible="{Binding ShowChance}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1" Text="{DynamicResource Localization.Games.Dice.Chance}" />
         <TextBlock IsVisible="{Binding ShowChance}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" Text="{DynamicResource Localization.Game.Payout}" />
         <TextBlock IsVisible="{Binding ShowAmount}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="3" Text="{DynamicResource Localization.Common.Profit}" />
         <Grid Grid.Column="1" Grid.Row="0" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding ShowAmount}">
@@ -34,19 +33,7 @@
         <Grid Grid.Column="1" Grid.Row="3" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding ShowAmount}">
             <NumericUpDown   Value="{Binding Profit}" Minimum="0" Maximum="9999999999" Grid.Column="0" FormatString="n8"/>
         </Grid>
-        <ToggleButton IsChecked="{Binding HighChecked}" IsVisible="{Binding ShowHighLow}" Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" >
-            <StackPanel Orientation="Horizontal">
-                <img:Icon Classes="btnIcon" Value="mdi-arrow-expand-up" />
-                <TextBlock Text="{DynamicResource Localization.Games.Dice.BetHigh}"/>
-            </StackPanel>
-        </ToggleButton>
-        <ToggleButton IsChecked="{Binding LowChecked}" IsVisible="{Binding ShowHighLow}" Grid.Column="2" Grid.Row="2" Grid.RowSpan="2" VerticalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" >
-            <StackPanel Orientation="Horizontal">
-                <img:Icon Classes="btnIcon" Value="mdi-arrow-expand-down" />
-                <TextBlock Text="{DynamicResource Localization.Games.Dice.BetLow}"/>
-            </StackPanel>
-        </ToggleButton>
-
+    
     </Grid>
 	</StackPanel>
 </UserControl>

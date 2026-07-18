@@ -204,6 +204,7 @@
             <system:String x:Key="Localization.Games.Dice.Chance">Chance</system:String>
             <system:String x:Key="Localization.Games.Dice.Roll">Roll</system:String>
             <system:String x:Key="Localization.Games.Limbo.Result">Result</system:String>
+    <system:String x:Key="Localization.Games.RangeDice.Range">Range</system:String>
 
 
             <system:String x:Key="Localization.Strategy.DAlembert.Increment">Increment</system:String>
