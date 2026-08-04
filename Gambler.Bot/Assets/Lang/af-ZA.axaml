@@ -17,6 +17,7 @@
     <system:String x:Key="Localization.InstanceView.Menu.LogOut">Teken Uit</system:String>
     <system:String x:Key="Localization.InstanceView.Menu.LogIn">Teken In</system:String>
     <system:String x:Key="Localization.InstanceView.Menu.ChangeSite">Verander Webwerf</system:String>
+    <system:String x:Key="Localization.InstanceView.Menu.BrowserLogin">Blaaier Aanmelding</system:String>
     <system:String x:Key="Localization.InstanceView.Menu.Language">Taal</system:String>
     <system:String x:Key="Localization.InstanceView.Menu.SetupWizard">Instellingswizard</system:String>
     <system:String x:Key="Localization.InstanceView.Menu.ResetToDefault">Stel Terug na Verstek</system:String>
@@ -30,6 +31,7 @@
     <system:String x:Key="Localization.InstanceView.Status">Status: </system:String>
     <system:String x:Key="Localization.InstanceView.LastAction">Laaste Aksie:</system:String>
     <system:String x:Key="Localization.Common.Advanced.AutoWith">Outomatiese onttrekking/tip</system:String>
+    <system:String x:Key="Localization.Common.Advanced.ZigZag">Zig Zag/Hoog laag</system:String>
     <system:String x:Key="Localization.Common.Strategy">Strategie</system:String>
     <system:String x:Key="Localization.Common.ResetSettings">Herstel instellings</system:String>
     <system:String x:Key="Localization.Common.AdvancedSettings">Gevorderde instellings</system:String>
@@ -53,6 +55,7 @@
     <system:String x:Key="Localization.Common.Profit">Wins</system:String>
     <system:String x:Key="Localization.Common.Loss">Verlies</system:String>
     <system:String x:Key="Localization.Common.Canel">Kanselleer</system:String>
+    <system:String x:Key="Localization.Common.Currency">Geldeenheid</system:String>
     <system:String x:Key="Localization.Common.Browse">Blaai</system:String>
     <system:String x:Key="Localization.Common.First">Eerste</system:String>
     <system:String x:Key="Localization.Common.Previous">Vorige</system:String>
@@ -65,6 +68,9 @@
     <system:String x:Key="Localization.Common.LoggingIn">Teken in...</system:String>
     <system:String x:Key="Localization.Common.LoginFailed">Kon nie aanmeld nie</system:String>
     <system:String x:Key="Localization.Common.Filters">Meer filters en instellings kom binnekort</system:String>
+    <system:String x:Key="Localization.Common.MinMax">Minimum/Maksimum weddenskap</system:String>
+    <system:String x:Key="Localization.Common.MinBet">Minimum weddenskap</system:String>
+    <system:String x:Key="Localization.Common.MaxBet">Maksimum weddenskap</system:String>
     <system:String x:Key="Localization.Common.Advanced.BotSpeed">Bot Spoed</system:String>
     <system:String x:Key="Localization.Common.Advanced.BetsPS">Weddenskappe per sekonde</system:String>
     <system:String x:Key="Localization.Common.Advanced.UpperLimit">Bo-grens</system:String>
@@ -103,6 +109,8 @@
         <system:String x:Key="Localization.Common.Stop">Stop</system:String>
         <system:String x:Key="Localization.Common.SelectSite.ViewSite">Besoek webwerf</system:String>
         <system:String x:Key="Localization.Common.SessionStats.TimeRunning">Tyd aan die gang</system:String>
+        <system:String x:Key="Localization.Common.SessionStats.BettingSpeed">Weddenskappe/s</system:String>
+        <system:String x:Key="Localization.Common.SessionStats.AvgBettingSpeed">Gem. Weddenskappe/s</system:String>
         <system:String x:Key="Localization.Common.SessionStats.Wagered">Gewed</system:String>
         <system:String x:Key="Localization.Common.SessionStats.CurrentStreak">Huidige reeks</system:String>
         <system:String x:Key="Localization.Common.SessionStats.BestStreak">Beste reeks</system:String>
@@ -131,6 +139,9 @@
         <system:String x:Key="Localization.Common.Simulation.ProjectedTime">Geskatte tyd</system:String>
         <system:String x:Key="Localization.Common.Simulation.ProjectedRemaining">Geskatte oorblywende</system:String>
         <system:String x:Key="Localization.Common.Simulation.EnableBetLog">Aktiveer weddenskapslog</system:String>
+        <system:String x:Key="Localization.Common.Simulation.ShowChart">Wys grafiek</system:String>
+        <system:String x:Key="Localization.Common.Simulation.ChartBets">Weddenskappe in grafiek</system:String>
+        <system:String x:Key="Localization.Common.Simulation.ChartSlow">Om die grafiek te aktiveer sal simulasieprestasie aansienlik beïnvloed.</system:String>
 
         <system:String x:Key="Localization.Common.Triggers.Enabled">Geaktiveer</system:String>
         <system:String x:Key="Localization.Common.Triggers.Description">Beskrywing</system:String>
@@ -178,6 +189,7 @@
             <system:String x:Key="Localization.AppSettings.Error.Other">Ander</system:String>
             <system:String x:Key="Localization.AppSettings.Error.BetMismatch">Weddenskap Stem nie Ooreen</system:String>
             <system:String x:Key="Localization.AppSettings.Error.Unknown">Onbekend</system:String>
+            <system:String x:Key="Localization.AppSettings.Error.Bank">Bank/Kluis</system:String>
 
             <system:String x:Key="Localization.Game.BetId">Weddenskap ID</system:String>
             <system:String x:Key="Localization.Game.Time">Tyd</system:String>
@@ -188,6 +200,9 @@
             <system:String x:Key="Localization.Games.Dice.BetLow">Weddenskap Laag</system:String>
             <system:String x:Key="Localization.Games.Dice.Chance">Kans</system:String>
             <system:String x:Key="Localization.Games.Dice.Roll">Rol</system:String>
+            <system:String x:Key="Localization.Games.Limbo.Result">Resultaat</system:String>
+            <system:String x:Key="Localization.Games.RangeDice.Range">Bereik</system:String>
+            <system:String x:Key="Localization.Games.RangeDice.Type">Tipe</system:String>
 
             <system:String x:Key="Localization.Strategy.DAlembert.Increment">Vermeerdering</system:String>
             <system:String x:Key="Localization.Strategy.DAlembert.Stretch">Strek</system:String>
@@ -223,4 +238,5 @@
 
             <system:String x:Key="Localization.Strategy.Programmer.New">Nuut</system:String>
             <system:String x:Key="Localization.Strategy.Programmer.SaveAs">Stoor as</system:String>
+            <system:String x:Key="Localization.Strategy.Programmer.FileName">Lêer: </system:String>
         </ResourceDictionary>
