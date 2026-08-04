@@ -21,7 +21,7 @@
       <Setter Property="Background" Value="{Binding  Converter={StaticResource RowConverter}}" />
     </Style>
   </UserControl.Styles>
-  <DataGrid ItemsSource="{Binding Bets}" IsReadOnly="True"  >
+  <DataGrid ItemsSource="{Binding Bets}" IsReadOnly="True" VerticalScrollBarVisibility="Auto"  >
     <DataGrid.Columns>
       <DataGridTextColumn Binding="{Binding BetID}" Header="{DynamicResource Localization.Game.BetId}"/>
       <DataGridTextColumn Binding="{Binding DateValue}" Header="{DynamicResource Localization.Game.Time}"/>

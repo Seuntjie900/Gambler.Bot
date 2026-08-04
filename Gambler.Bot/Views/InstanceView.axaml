@@ -34,7 +34,7 @@
     <Grid>
 <TabControl x:Name="tabs">
     <TabItem Header="Bot">
-        <DockPanel >
+        <DockPanel ClipToBounds="True">
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="{DynamicResource Localization.InstanceView.Menu.File}">
                     <MenuItem Header="{DynamicResource Localization.InstanceView.Menu.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding ShowBot}"/>
@@ -125,7 +125,7 @@
                     <actipro:ToggleThemeButton Grid.Column="2" Command="{Binding ThemeToggled}" />
                 </Grid>
             </Border>
-            <Grid>
+            <Grid ClipToBounds="True">
                 <common:SelectSiteView
                     DataContext="{Binding SelectSite}"
                     IsVisible="{Binding $parent[local:InstanceView].((vm:InstanceViewModel)Tag).ShowSites}"
@@ -154,37 +154,42 @@
                             <RowDefinition Height="7"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <Border IsVisible="{Binding ShowChart}" Grid.Row="0" MinHeight="250"  >
+                        <Border IsVisible="{Binding ShowChart}" Grid.Row="0" MinHeight="50"  >
                             <common:ProfitChartView DataContext="{Binding ChartData}"/>
                         </Border>
                         <GridSplitter Margin="2" Grid.Row="1" Background="{actipro:ThemeResource Container3BorderBrush}" ResizeDirection="Rows"/>
-                      <StackPanel Orientation="Vertical" Grid.Row="2">
-                        <StackPanel Orientation="Horizontal">
+                      <Grid Grid.Row="2">
+                        <Grid.RowDefinitions>
+                          <RowDefinition Height="Auto"/>
+                          <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Grid.Row="0">
                           <ComboBox x:Name="cmbGrid" ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedView}"  IsEnabled="{Binding ShowBot}" MaxWidth="150" MinWidth="100" HorizontalAlignment="Left" />
                           <Button Click="Button_Click_1" >
                               <i:Icon Value="mdi-close" />
                           </Button>
                         </StackPanel>
-                        <ContentControl Content="{Binding LiveBets}" MinHeight="250"  IsVisible="{Binding ShowLiveBets}">
-                            <ContentControl.DataTemplates>
-                              <DataTemplate DataType="gamesVM:GenericLiveBetViewModel">
-                                <games:GenericLiveBetView/>
-                              </DataTemplate>
-                                <DataTemplate DataType="diceVM:DiceLiveBetViewModel">
-                                    <dice:DiceLiveBetView/>
+                        
+                          <ContentControl  Grid.Row="1" Content="{Binding LiveBets}" MinHeight="50"  IsVisible="{Binding ShowLiveBets}">
+                              <ContentControl.DataTemplates>
+                                <DataTemplate DataType="gamesVM:GenericLiveBetViewModel">
+                                  <games:GenericLiveBetView/>
                                 </DataTemplate>
-                                <DataTemplate DataType="twistVM:TwistLiveBetViewModel">
-                                    <twist:TwistLiveBetView/>
-                                </DataTemplate>
-                                <DataTemplate DataType="limboVM:LimboLiveBetViewModel">
-                                    <limbo:LimboLiveBetView/>
-                                </DataTemplate>
-                                <DataTemplate DataType="rangeVM:RangeDiceLiveBetViewModel">
-                                    <range:RangeDiceLiveBetView/>
-                                </DataTemplate>
-                            </ContentControl.DataTemplates>
-                        </ContentControl>
-                      </StackPanel>
+                                  <DataTemplate DataType="diceVM:DiceLiveBetViewModel">
+                                      <dice:DiceLiveBetView/>
+                                  </DataTemplate>
+                                  <DataTemplate DataType="twistVM:TwistLiveBetViewModel">
+                                      <twist:TwistLiveBetView/>
+                                  </DataTemplate>
+                                  <DataTemplate DataType="limboVM:LimboLiveBetViewModel">
+                                      <limbo:LimboLiveBetView/>
+                                  </DataTemplate>
+                                  <DataTemplate DataType="rangeVM:RangeDiceLiveBetViewModel">
+                                      <range:RangeDiceLiveBetView/>
+                                  </DataTemplate>
+                              </ContentControl.DataTemplates>
+                          </ContentControl>
+                      </Grid>
                     </Grid>
                     <DockPanel Grid.Column="2" Grid.RowSpan="3" >
                         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center">
