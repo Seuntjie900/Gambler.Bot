@@ -28,14 +28,13 @@
             <DataGridTextColumn Binding="{Binding DateValue}" Header="{DynamicResource Localization.Game.Time}"/>
             <DataGridTextColumn Binding="{Binding TotalAmount}" Header="{DynamicResource Localization.Game.Amount}"/>
           <DataGridTextColumn Binding="{Binding Currency}" Header="{DynamicResource Localization.Common.Currency}"/>
-            <DataGridCheckBoxColumn Binding="{Binding Type}" Header="{DynamicResource Localization.Games.Dice.High}"/>
+            <DataGridTextColumn Binding="{Binding Type}" Header="{DynamicResource Localization.Games.RangeDice.Type}"/>
             <DataGridTextColumn Binding="{Binding Range}" Header="{DynamicResource Localization.Games.RangeDice.Range}"/>
             
             
             
-            <DataGridTemplateColumn Header="{DynamicResource Localization.Games.Dice.Roll}"  >
-                
-            </DataGridTemplateColumn>
+            <DataGridTextColumn Binding="{Binding Roll}" Header="{DynamicResource Localization.Games.Dice.Roll}"  />
+                 
             <DataGridTextColumn Binding="{Binding Profit}" Header="{DynamicResource Localization.Common.Profit}"/>
             <DataGridTextColumn Binding="{Binding Nonce}" Header="{DynamicResource Localization.Common.RollVerify.Nonce}"/>
         </DataGrid.Columns>

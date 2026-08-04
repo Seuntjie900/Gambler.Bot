@@ -1,39 +1,41 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Gambler.Bot.Views.Games.RangeDice.RangeDicePlaceBetView"
-             xmlns:vm="using:Gambler.Bot.ViewModels.Games.RangeDice"
-             x:DataType="vm:RangeDicePlaceBetViewModel"
-             xmlns:img="https://github.com/projektanker/icons.avalonia">
-	<StackPanel Orientation="Vertical">
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="Gambler.Bot.Views.Games.RangeDice.RangeDicePlaceBetView"
+			 xmlns:vm="using:Gambler.Bot.ViewModels.Games.RangeDice"
+			 x:DataType="vm:RangeDicePlaceBetViewModel"
+			 xmlns:img="https://github.com/projektanker/icons.avalonia">
+	<StackPanel Orientation="Vertical" Spacing="8">
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 			<TextBlock Text="{Binding Game}" />
 		</StackPanel>
-    <Grid ColumnDefinitions="Auto,2*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
-        <TextBlock IsVisible="{Binding ShowAmount}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" Text="{DynamicResource Localization.Common.Bet}" />
-        <TextBlock IsVisible="{Binding ShowChance}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" Text="{DynamicResource Localization.Game.Payout}" />
-        <TextBlock IsVisible="{Binding ShowAmount}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="3" Text="{DynamicResource Localization.Common.Profit}" />
-        <Grid Grid.Column="1" Grid.Row="0" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding ShowAmount}">
-            <NumericUpDown IsVisible="{Binding ShowAmount}" Grid.Column="0" HorizontalAlignment="Stretch" Value="{Binding Amount}" Increment="0.00000100" Minimum="0" Maximum="9999999999" FormatString="n8" />
-            <Button  Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Content="1/2" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding HalfAmountCommand}"/>
-            <Button  Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="2x" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding DoubleAmountCommand}"/>
-        </Grid>
-        <Grid Grid.Column="1" Grid.Row="1" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding ShowChance}">
-            <NumericUpDown  Value="{Binding Chance}" Minimum="0" Maximum="99.9999" Grid.Column="0" FormatString="n5"/>
-            <Button  Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Content="1/2" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding HalfChanceCommand}"/>
-            <Button  Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="2x" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding DoubleChanceCommand}"/>
-        </Grid>
-        <Grid Grid.Column="1" Grid.Row="2" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding ShowChance}">
-            <NumericUpDown  Value="{Binding Payout}" Minimum="0" Maximum="9999999999" Grid.Column="0" FormatString="n8"/>
-            <Button  Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Content="1/2" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding HalfPayoutCommand}"/>
-            <Button  Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="2x" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding DoublePayoutCommand}"/>
-        </Grid>
-        <Grid Grid.Column="1" Grid.Row="3" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding ShowAmount}">
-            <NumericUpDown   Value="{Binding Profit}" Minimum="0" Maximum="9999999999" Grid.Column="0" FormatString="n8"/>
-        </Grid>
-    
-    </Grid>
+
+		<Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="8">
+			<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Amount" />
+			<Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+				<NumericUpDown Grid.Column="0" HorizontalAlignment="Stretch" Value="{Binding Amount}" Increment="0.00000100" Minimum="0" Maximum="9999999999" FormatString="n8" />
+				<Button Grid.Column="1" Content="1/2" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding HalfAmountCommand}" />
+				<Button Grid.Column="2" Content="2x" VerticalContentAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" Command="{Binding DoubleAmountCommand}" />
+			</Grid>
+
+			<TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Type" />
+			<ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding Type, Mode=TwoWay}" />
+
+			<TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Min" />
+			<NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding Min}" Minimum="0" Maximum="100" FormatString="n4" />
+
+			<TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Max" />
+			<NumericUpDown Grid.Row="3" Grid.Column="1" Value="{Binding Max}" Minimum="0" Maximum="100" FormatString="n4" />
+
+			<TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Min 2" IsVisible="{Binding ShowSecondRange}" />
+			<NumericUpDown Grid.Row="4" Grid.Column="1" Value="{Binding Min2}" Minimum="0" Maximum="100" FormatString="n4" IsVisible="{Binding ShowSecondRange}" />
+
+			<TextBlock Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Text="Max 2" IsVisible="{Binding ShowSecondRange}" />
+			<NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding Max2}" Minimum="0" Maximum="100" FormatString="n4" IsVisible="{Binding ShowSecondRange}" />
+		</Grid>
+
+		<TextBlock HorizontalAlignment="Center" Text="{Binding RangePreview}" />
 	</StackPanel>
 </UserControl>

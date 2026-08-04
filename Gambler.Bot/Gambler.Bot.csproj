@@ -1653,11 +1653,6 @@
 	  </Compile>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <AdditionalFiles Include="Views\Games\RangeDice\RangeDiceLiveBetView.axaml" />
-	  <AdditionalFiles Include="Views\Games\RangeDice\RangeDicePlaceBetView.axaml" />
-	</ItemGroup>
-
 	
 
 

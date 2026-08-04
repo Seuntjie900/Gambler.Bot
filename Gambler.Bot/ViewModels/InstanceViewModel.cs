@@ -19,6 +19,7 @@ using Gambler.Bot.ViewModels.Common;
 using Gambler.Bot.ViewModels.Games;
 using Gambler.Bot.ViewModels.Games.Dice;
 using Gambler.Bot.ViewModels.Games.Limbo;
+using Gambler.Bot.ViewModels.Games.RangeDice;
 using Gambler.Bot.ViewModels.Games.Twist;
 using Gambler.Bot.ViewModels.Strategies;
 using Gambler.Bot.Views;
@@ -305,6 +306,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                         tmpLive = LivebetVMs[game ?? default];
 
                         break;
+                    case Bot.Common.Games.Games.RangeDice:
+                             LivebetVMs[game ?? default] = new RangeDiceLiveBetViewModel(_logger);
+                        tmpLive = LivebetVMs[game ?? default];
+
+                        break;
 
                 }
             }
@@ -345,6 +351,9 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                 case
                     Bot.Common.Games.Games.Limbo:
                     PlaceBetVM = new LimboPlaceBetViewModel(_logger);
+                    break;
+                case Bot.Common.Games.Games.RangeDice:
+                    PlaceBetVM = new RangeDicePlaceBetViewModel(_logger);
                     break;
             }
             SetGameVM(botIns.CurrentGame);
