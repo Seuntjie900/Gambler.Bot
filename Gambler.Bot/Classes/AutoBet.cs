@@ -1144,7 +1144,7 @@ namespace Gambler.Bot.Classes
                     }
                     else
                     {
-                        _Logger.LogError("DBInterface not initialized");
+                        
                     }
                 }
             }
@@ -1333,21 +1333,26 @@ namespace Gambler.Bot.Classes
             try
             {
                 _Logger?.LogInformation("Attempting DB Interface Creation: {DBProvider}", PersonalSettings.Provider);
-                DBInterface = new BotContext(_Logger);//create a bot context here. 
-                
-                DBInterface.Settings = PersonalSettings;
-                //if (!DBInterface.Database.EnsureCreated())
+                if (PersonalSettings.Provider != "None")
                 {
-                    try
+                    DBInterface = new BotContext(_Logger);//create a bot context here. 
+
+                    DBInterface.Settings = PersonalSettings;
+                    //if (!DBInterface.Database.EnsureCreated())
                     {
-                        DBInterface.Database.Migrate();
+                        try
+                        {
+                            DBInterface.Database.Migrate();
+                        }
+                        catch (Exception e)
+                        {
+                            _Logger?.LogError(e.ToString());
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        _Logger?.LogError(e.ToString());
-                    }
+                    _Logger?.LogInformation("DB Interface Created: {DBProvider}", PersonalSettings.Provider);
                 }
-                _Logger?.LogInformation("DB Interface Created: {DBProvider}", PersonalSettings.Provider);
+                else
+                    DBInterface = null;
             }
             catch (Exception e)
             {
