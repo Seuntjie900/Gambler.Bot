@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Gambler.Bot.Views.AppSettings.EmailSettingsView"
+             xmlns:vm="using:Gambler.Bot.ViewModels.AppSettings"
+             x:DataType="vm:EmailSettingsViewModel"
+             >
+ <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Column="0" Grid.Row="0" Text="Email provider" Margin="5"/>
+        <ComboBox Grid.Column="1" Grid.Row="0"  Margin="5" ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}">
+
+        </ComboBox>
+        <Grid  Margin="5" ColumnDefinitions="auto,*" RowDefinitions="auto,auto,auto,auto,auto,auto,*" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" IsVisible="{Binding ShowSMTP}" >
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Email address"></TextBlock>
+            <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Email}"/>
+            <TextBlock Text="Host" Grid.Row="1" Grid.Column="0"></TextBlock>
+            <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding smtpHost}"/>
+            <TextBlock Text="Port" Grid.Row="2" Grid.Column="0"></TextBlock>
+            <TextBox Grid.Column="1" Grid.Row="2" Text="{Binding smtpPort}"/>
+            <TextBlock Text="Username" Grid.Row="3" Grid.Column="0"></TextBlock>
+            <TextBox Grid.Column="1" Grid.Row="3" Text="{Binding smtpUser}"/>
+            <TextBlock Text="Password" Grid.Row="4" Grid.Column="0"></TextBlock>
+            <TextBox PasswordChar="*" Grid.Column="1" Grid.Row="4" Text="{Binding smtpPass}"/>
+            <TextBlock Text="Sending Address" Grid.Row="5" Grid.Column="0"></TextBlock>
+            <TextBox  Grid.Column="1" Grid.Row="5" Text="{Binding Sender}"/>
+        </Grid>
+    </Grid>
+</UserControl>

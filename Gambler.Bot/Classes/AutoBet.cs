@@ -2,6 +2,7 @@
 using Gambler.Bot.Common.Events;
 using Gambler.Bot.Common.Games;
 using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.RangeDice;
 using Gambler.Bot.Common.Games.Twist;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Events;
@@ -10,9 +11,11 @@ using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Sites.Classes;
 using Gambler.Bot.Core.Storage;
 using Gambler.Bot.Helpers;
+using Gambler.Bot.Interfaces;
 using Gambler.Bot.Strategies.Helpers;
 using Gambler.Bot.Strategies.Strategies;
 using Gambler.Bot.Strategies.Strategies.Abstractions;
+using Gambler.Bot.ViewModels;
 using Gambler.Bot.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -85,6 +88,7 @@ namespace Gambler.Bot.Classes
         }
 
         public PersonalSettings PersonalSettings { get; set; } = new PersonalSettings();
+        public IEmailProvider EmailProvider { get; set; }
         Bet MostRecentBet = null;
         DateTime MostRecentBetTime = new DateTime();
         PlaceBet NextBext = null;
@@ -538,6 +542,13 @@ namespace Gambler.Bot.Classes
                 {
                     twist.High = NewHigh;
                 }
+                else if (NextBext is PlaceRangeDiceBet range)
+                {
+                    if (range.Type == RangeDiceType.Out)
+                        range.Type = RangeDiceType.In;
+                    else if (range.Type == RangeDiceType.In)
+                        range.Type = RangeDiceType.Out;
+                }
             }
             if (Running)
             {
@@ -903,7 +914,7 @@ namespace Gambler.Bot.Classes
                                         case TriggerAction.Alarm:
                                         case TriggerAction.Chime:
                                         case TriggerAction.Popup: OnNotification?.Invoke(this, new NotificationEventArgs { NotificationTrigger = x }); break;
-                                        case TriggerAction.Email: throw new NotImplementedException("Supporting infrastructure for this still needs to be built.");
+                                        case TriggerAction.Email: if (EmailProvider!=null) await EmailProvider.SendEmail (x,CurrentSite.Stats,Stats); break;
                                     }
                                 }
                             }
@@ -1342,6 +1353,38 @@ namespace Gambler.Bot.Classes
             {
                 _Logger?.LogError(e.ToString()); 
                 DBInterface = null;
+            }
+            LoadEmailProvider(InstanceViewModel.SettingsDirectory);
+        }
+
+        void LoadEmailProvider(string SettingsFolder)
+        {
+            //load email provider
+            try
+            {
+                
+                if (!string.IsNullOrWhiteSpace( PersonalSettings.EmailProviderType) )
+                {
+                    string settingsFile = Path.Combine(SettingsFolder, PersonalSettings.EmailProviderType + ".json");
+                    if (File.Exists(settingsFile))
+                    {
+                        //use reflection to find a clas that implements IEmailProvider with the provider name
+                        //if found,
+
+                        Type tProvider = IEmailProvider.GetTypeFromName(PersonalSettings.EmailProviderType);
+                        if (tProvider !=null)
+                        {
+                            IEmailProvider prov = JsonSerializer.Deserialize(File.ReadAllText(settingsFile), tProvider) as IEmailProvider;
+                            prov?.LoadSettings(SettingsFolder, null);
+                            EmailProvider = prov;
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 

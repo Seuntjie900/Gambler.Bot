@@ -24,6 +24,9 @@
             <TabItem Header="{DynamicResource Localization.AppSettings.Errors}">
                 <local:ErrorsView DataContext="{Binding Errors}"/>
             </TabItem>
+            <TabItem Header="Emails">
+                <local:EmailSettingsView DataContext="{Binding Emails}"/>
+            </TabItem>
         </TabControl>
         <Border Padding="5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1" >
             <StackPanel Orientation="Horizontal">
