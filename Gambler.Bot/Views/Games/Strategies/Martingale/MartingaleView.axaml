@@ -8,15 +8,20 @@
              xmlns:vm="using:Gambler.Bot.ViewModels.Strategies"
              x:DataType="vm:MartingaleViewModel"
              xmlns:diceVM="using:Gambler.Bot.ViewModels.Games.Dice"
+             xmlns:limboVM="using:Gambler.Bot.ViewModels.Games.Limbo"
              xmlns:system="using:System"
+             xmlns:twistVM="using:Gambler.Bot.ViewModels.Games.Twist"
              >
     <ScrollViewer>
         <StackPanel Orientation="Vertical">
             <ContentControl Content="{Binding PlaceBetVM}">
-                <ContentControl.DataTemplates>
-                    <DataTemplate DataType="dice:DicePlaceBetView">
-                        <dice:DicePlaceBetView/>
-                    </DataTemplate>
+                <ContentControl.DataTemplates>                    
+                    <DataTemplate DataType="limboVM:LimboPlaceBetViewModel">
+                                                <dice:DicePlaceBetView/>
+                                            </DataTemplate>
+                                            <DataTemplate DataType="twistVM:TwistPlaceBetViewModel">
+                                                <dice:DicePlaceBetView/>
+                                            </DataTemplate>  
                 </ContentControl.DataTemplates>
             </ContentControl>
             <TabControl>

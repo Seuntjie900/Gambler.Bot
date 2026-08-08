@@ -329,35 +329,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         {
             if (PlaceBetVM != null)
                 PlaceBetVM.PlaceBet -= PlaceBetVM_PlaceBet;
-            
-            switch (botIns.CurrentGame)
-            {
-                case Bot.Common.Games.Games.Crash:
-                case Bot.Common.Games.Games.Roulette:
-                case Bot.Common.Games.Games.Plinko:
-                    break;
-                case
-                    Bot.Common.Games.Games.Dice:
 
-                    {
-                        PlaceBetVM = new DicePlaceBetViewModel(_logger);                        
-                        break;
-                    }
-                case
-                Bot.Common.Games.Games.Twist:
-
-                    {
-                        PlaceBetVM = new TwistPlaceBetViewModel(_logger);                       
-                        break;
-                    }
-                case
-                    Bot.Common.Games.Games.Limbo:
-                    PlaceBetVM = new LimboPlaceBetViewModel(_logger);
-                    break;
-                case Bot.Common.Games.Games.RangeDice:
-                    PlaceBetVM = new RangeDicePlaceBetViewModel(_logger);
-                    break;
-            }
+            PlaceBetVM= iPlaceBet.GetFromGame(botIns.CurrentGame, _logger);
             SetGameVM(botIns.CurrentGame);
             if (PlaceBetVM != null)
             {

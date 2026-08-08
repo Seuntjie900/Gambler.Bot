@@ -12,7 +12,7 @@
 			<TextBlock Text="{Binding Game}" />
 		</StackPanel>
 
-		<Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="8">
+		<Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="8">
 			<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Amount" />
 			<Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
 				<NumericUpDown Grid.Column="0" HorizontalAlignment="Stretch" Value="{Binding Amount}" Increment="0.00000100" Minimum="0" Maximum="9999999999" FormatString="n8" />
@@ -34,6 +34,12 @@
 
 			<TextBlock Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Text="Max 2" IsVisible="{Binding ShowSecondRange}" />
 			<NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding Max2}" Minimum="0" Maximum="100" FormatString="n4" IsVisible="{Binding ShowSecondRange}" />
+			
+			<TextBlock Grid.Row="6" Grid.Column="0" VerticalAlignment="Center" Text="Chance"/>
+			<NumericUpDown Grid.Row="6" Grid.Column="1" Value="{Binding Chance}" Minimum="0" Maximum="100" FormatString="n4"  />
+			
+			<TextBlock Grid.Row="7" Grid.Column="0" VerticalAlignment="Center" Text="Payout"  />
+			<NumericUpDown Grid.Row="7" Grid.Column="1" Value="{Binding Payout}" Minimum="0" Maximum="100" FormatString="n4" />
 		</Grid>
 
 		<TextBlock HorizontalAlignment="Center" Text="{Binding RangePreview}" />

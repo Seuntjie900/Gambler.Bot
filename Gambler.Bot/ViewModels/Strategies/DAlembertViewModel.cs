@@ -1,8 +1,11 @@
-﻿using Gambler.Bot.Strategies.Strategies;
-using Gambler.Bot.Strategies.Strategies.Abstractions;
-using Gambler.Bot.Classes.BetsPanel;
+﻿using Gambler.Bot.Classes.BetsPanel;
 using Gambler.Bot.Classes.Strategies;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Strategies.Strategies;
+using Gambler.Bot.Strategies.Strategies.Abstractions;
 using Gambler.Bot.ViewModels.Games.Dice;
+using Gambler.Bot.ViewModels.Games.Limbo;
+using Gambler.Bot.ViewModels.Games.Twist;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -10,7 +13,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Gambler.Bot.Common.Games;
+using static IronPython.Modules._ast;
 
 namespace Gambler.Bot.ViewModels.Strategies
 {
@@ -51,13 +54,7 @@ namespace Gambler.Bot.ViewModels.Strategies
                 notify.PropertyChanged -= Notify2_PropertyChanged;
             }
             Game = newGame;
-            switch (Game)
-            {
-                case Bot.Common.Games.Games.Dice: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true }; break;
-                case Bot.Common.Games.Games.Twist: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true }; break;
-                case Bot.Common.Games.Games.Limbo: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowHighLow = false }; break;
-                default: PlaceBetVM = null; break;
-            }
+            PlaceBetVM = iPlaceBet.GetFromGame(newGame, _logger);
             if (PlaceBetVM != null && PlaceBetVM is INotifyPropertyChanged notify2)
             {
                 notify2.PropertyChanged += Notify2_PropertyChanged;

@@ -75,11 +75,7 @@ namespace Gambler.Bot.ViewModels.Strategies
                 notify.PropertyChanged -= Notify2_PropertyChanged;
             }
             Game = newGame;
-            switch (Game)
-            {
-                case Bot.Common.Games.Games.Dice: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true }; break;
-                default: PlaceBetVM = null; break;
-            }
+            PlaceBetVM = iPlaceBet.GetFromGame(newGame, _logger);
             if (PlaceBetVM != null && PlaceBetVM is INotifyPropertyChanged notify2)
             {
                 notify2.PropertyChanged += Notify2_PropertyChanged;
