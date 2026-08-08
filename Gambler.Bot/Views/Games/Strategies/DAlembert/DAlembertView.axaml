@@ -2,21 +2,29 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:range="using:Gambler.Bot.Views.Games.RangeDice"
+             xmlns:rangeVM="using:Gambler.Bot.ViewModels.Games.RangeDice"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Gambler.Bot.Views.Games.Strategies.DAlembert.DAlembertView"
              xmlns:vm="using:Gambler.Bot.ViewModels.Strategies"
              x:DataType="vm:DAlembertViewModel"
              xmlns:dice="using:Gambler.Bot.Views.Games.Dice"
+             xmlns:diceVM="using:Gambler.Bot.ViewModels.Games.Dice"
+             xmlns:limboVM="using:Gambler.Bot.ViewModels.Games.Limbo"
              xmlns:system="using:System"
+             xmlns:twistVM="using:Gambler.Bot.ViewModels.Games.Twist"
              >
     <StackPanel Orientation="Vertical">
-        <ContentControl Content="{Binding PlaceBetVM}">
-            <ContentControl.DataTemplates>
-                <DataTemplate DataType="dice:DicePlaceBetView">
-                    <dice:DicePlaceBetView/>
-                </DataTemplate>
-            </ContentControl.DataTemplates>
-        </ContentControl>
+         <ContentControl Content="{Binding PlaceBetVM}" VerticalAlignment="Top">
+                                        <ContentControl.DataTemplates>                                           
+                                            <DataTemplate DataType="limboVM:LimboPlaceBetViewModel">
+                                                <dice:DicePlaceBetView/>
+                                            </DataTemplate>
+                                            <DataTemplate DataType="twistVM:TwistPlaceBetViewModel">
+                                                <dice:DicePlaceBetView/>
+                                            </DataTemplate>                                           
+                                        </ContentControl.DataTemplates>
+                                    </ContentControl>
         <Expander Margin="2"  Header="{DynamicResource Localization.Common.Reset.OnLoss}" IsExpanded="True" >
             <Expander.HeaderTemplate>
                 <DataTemplate x:DataType="system:String" >

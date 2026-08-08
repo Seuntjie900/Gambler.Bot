@@ -1,6 +1,7 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Helpers;
+using Gambler.Bot.Interfaces;
 using Gambler.Bot.Strategies.Helpers;
 using System;
 using System.Collections.Generic;
@@ -172,6 +173,8 @@ namespace Gambler.Bot.Classes
             
             return settings;
         }
+
+        public string EmailProviderType { get; set; }
     }
    
 }

@@ -46,6 +46,7 @@ namespace Gambler.Bot.ViewModels.AppSettings
                 case 2: DBVM = new MySqlViewModel(_logger); break;
                 case 3: DBVM = new MongoDBViewModel(_logger); break;
                 case 4: DBVM = new PostGresViewModel(_logger); break;
+                case 5: DBVM = null; UpdateSettings(); break;
                 default: DBVM = new SQLiteViewModel(_logger); break;
             }
         }
@@ -62,19 +63,19 @@ namespace Gambler.Bot.ViewModels.AppSettings
         public BetStorageViewModel(ILogger logger) : base(logger)
         {
             SelectedStorageTypeIndex = 0;
-            Storages = new List<string>() { "SQLite", "SQL Server", "MySQL", "MongoDb", "PostGres" };
+            Storages = new List<string>() { "SQLite", "SQL Server", "MySQL", "MongoDb", "PostGres", "None" };
         }
 
         public void UpdateSettings()
         {
-            Settings.Provider = DBVM.Provider();
+            Settings.Provider = DBVM?.Provider()??"None";
             Settings.EncryptConstring = !string.IsNullOrWhiteSpace(Password);
-            Settings.SetConnectionString(DBVM.ConnectionString(), Password);
+            Settings.SetConnectionString(DBVM?.ConnectionString(), Password);
         }
 
         public bool Verify()
         {
-            return DBVM.Validate();
+            return DBVM?.Validate()??true;
         }
 
         

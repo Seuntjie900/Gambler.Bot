@@ -42,12 +42,12 @@
                 </Expander.HeaderTemplate>
                 <Grid RowDefinitions="*,*,*,*,*,*,*,*,*,*" ColumnDefinitions="25,125,2*,*">
                     <CheckBox IsChecked="{Binding BetSettings.EnableResetAfterLoseStreak}" Grid.Column="0" Grid.Row="0"/>
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{DynamicResource Localization.Common.Reset.StopAfter}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{DynamicResource Localization.Common.Reset.ResetAfter}" VerticalAlignment="Center"/>
                     <NumericUpDown Value="{Binding BetSettings.ResetAfterLoseStreak}" Grid.Column="2" Grid.Row="0"/>
                     <TextBlock Text="{DynamicResource Localization.Common.LossesInARow}" Grid.Column="3" Grid.Row="0" VerticalAlignment="Center"/>
 
                     <CheckBox IsChecked="{Binding BetSettings.EnableResetAfterLosses}" Grid.Column="0" Grid.Row="1"/>
-                    <TextBlock Grid.Column="1" Grid.Row="1" Text="Reset after every" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{DynamicResource Localization.Common.Reset.ResetAfterEvery}" VerticalAlignment="Center"/>
                     <NumericUpDown Value="{Binding BetSettings.ResetAfterLosses}" Grid.Column="2" Grid.Row="1"/>
                     <TextBlock Text="{DynamicResource Localization.Common.Losses}" Grid.Column="3" Grid.Row="1" VerticalAlignment="Center"/>
 
@@ -103,7 +103,7 @@
                 </Expander.HeaderTemplate>
                 <Grid RowDefinitions="*,*,*,*,*,*,*,*,*,*" ColumnDefinitions="25,125,2*,*">
                     <CheckBox IsChecked="{Binding BetSettings.EnableResetAfterWinStreak}" Grid.Column="0" Grid.Row="0"/>
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{DynamicResource Localization.Common.Reset.StopAfter}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{DynamicResource Localization.Common.Reset.ResetAfter}" VerticalAlignment="Center"/>
                     <NumericUpDown Value="{Binding BetSettings.ResetAfterWinStreak}" Grid.Column="2" Grid.Row="0"/>
                     <TextBlock Text="{DynamicResource Localization.Common.WinsInARow}" Grid.Column="3" Grid.Row="0" VerticalAlignment="Center"/>
 

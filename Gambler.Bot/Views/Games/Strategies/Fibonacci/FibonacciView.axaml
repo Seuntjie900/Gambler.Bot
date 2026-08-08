@@ -7,13 +7,18 @@
              xmlns:vm="using:Gambler.Bot.ViewModels.Strategies"
              x:DataType="vm:FibonacciViewModel"
              xmlns:dice="using:Gambler.Bot.Views.Games.Dice"
-             xmlns:system="using:System">
+             xmlns:limboVM="using:Gambler.Bot.ViewModels.Games.Limbo"
+             xmlns:system="using:System"
+             xmlns:twistVM="using:Gambler.Bot.ViewModels.Games.Twist">
     <StackPanel Orientation="Vertical">
         <ContentControl Content="{Binding PlaceBetVM}">
             <ContentControl.DataTemplates>
-                <DataTemplate DataType="dice:DicePlaceBetView">
-                    <dice:DicePlaceBetView/>
-                </DataTemplate>
+                <DataTemplate DataType="limboVM:LimboPlaceBetViewModel">
+                                                <dice:DicePlaceBetView/>
+                                            </DataTemplate>
+                                            <DataTemplate DataType="twistVM:TwistPlaceBetViewModel">
+                                                <dice:DicePlaceBetView/>
+                                            </DataTemplate>  
             </ContentControl.DataTemplates>
         </ContentControl>
         <Expander Margin="2"  Header="{DynamicResource Localization.Common.Reset.OnLoss}" IsExpanded="True" >

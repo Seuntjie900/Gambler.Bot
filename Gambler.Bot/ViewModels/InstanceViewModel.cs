@@ -19,6 +19,7 @@ using Gambler.Bot.ViewModels.Common;
 using Gambler.Bot.ViewModels.Games;
 using Gambler.Bot.ViewModels.Games.Dice;
 using Gambler.Bot.ViewModels.Games.Limbo;
+using Gambler.Bot.ViewModels.Games.RangeDice;
 using Gambler.Bot.ViewModels.Games.Twist;
 using Gambler.Bot.ViewModels.Strategies;
 using Gambler.Bot.Views;
@@ -151,6 +152,8 @@ namespace Gambler.Bot.ViewModels
             _logger.LogDebug("Instance viewmodel created");
             genLiveBetView = new GenericLiveBetViewModel(_logger);
         }
+
+        public static string SettingsDirectory { get => UISettings.Portable ? "" : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Gambler.Bot"); }
 
         private void Tmp_OnSiteStatsUpdated(object? sender, StatsUpdatedEventArgs e)
         {
@@ -305,6 +308,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                         tmpLive = LivebetVMs[game ?? default];
 
                         break;
+                    case Bot.Common.Games.Games.RangeDice:
+                             LivebetVMs[game ?? default] = new RangeDiceLiveBetViewModel(_logger);
+                        tmpLive = LivebetVMs[game ?? default];
+
+                        break;
 
                 }
             }
@@ -321,32 +329,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         {
             if (PlaceBetVM != null)
                 PlaceBetVM.PlaceBet -= PlaceBetVM_PlaceBet;
-            
-            switch (botIns.CurrentGame)
-            {
-                case Bot.Common.Games.Games.Crash:
-                case Bot.Common.Games.Games.Roulette:
-                case Bot.Common.Games.Games.Plinko:
-                    break;
-                case
-                    Bot.Common.Games.Games.Dice:
 
-                    {
-                        PlaceBetVM = new DicePlaceBetViewModel(_logger);                        
-                        break;
-                    }
-                case
-                Bot.Common.Games.Games.Twist:
-
-                    {
-                        PlaceBetVM = new TwistPlaceBetViewModel(_logger);                       
-                        break;
-                    }
-                case
-                    Bot.Common.Games.Games.Limbo:
-                    PlaceBetVM = new LimboPlaceBetViewModel(_logger);
-                    break;
-            }
+            PlaceBetVM= iPlaceBet.GetFromGame(botIns.CurrentGame, _logger);
             SetGameVM(botIns.CurrentGame);
             if (PlaceBetVM != null)
             {
@@ -988,18 +972,12 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         {
             try
             {
-                string path = string.Empty;
-                if (UISettings.Portable)
-                    path = "";
-                else
-                {
-                    path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Gambler.Bot");
-                }
+               
                 InstanceName = Name;
                 //load bet settings
-                BetSettingsFile = Path.Combine(path, Name + ".betset");
+                BetSettingsFile = Path.Combine(SettingsDirectory, Name + ".betset");
 
-                InstanceSettingsFile = Path.Combine(path, Name + ".siteset");
+                InstanceSettingsFile = Path.Combine(SettingsDirectory, Name + ".siteset");
                 if (File.Exists(InstanceSettingsFile))
                 {
                     LoadInstanceSettings(InstanceSettingsFile);
@@ -1043,18 +1021,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         {            
             //botIns.GetStrats();
             this.RaisePropertyChanged(nameof(Strategies));
-            if (UISettings.Portable)
-            {
-                PersonalSettingsFile = "PersonalSettings.json";
-            }
-            //Check if global settings for this account exists
-            else
-            {
-                PersonalSettingsFile = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Gambler.Bot",
-                    "PersonalSettings.json");
-            }
+            PersonalSettingsFile = Path.Combine(SettingsDirectory, "PersonalSettings.json");
+            
             if (!File.Exists(PersonalSettingsFile))
             {
                 botIns.PersonalSettings = PersonalSettings.Default();

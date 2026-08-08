@@ -10,7 +10,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games;
 
 namespace Gambler.Bot.ViewModels.Strategies
 {
@@ -51,13 +51,7 @@ namespace Gambler.Bot.ViewModels.Strategies
                 notify.PropertyChanged -= Notify2_PropertyChanged;
             }
             Game = newGame;
-            switch (Game)
-            {
-                case Bot.Common.Games.Games.Dice: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true }; break;
-                case Bot.Common.Games.Games.Twist: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true }; break;
-                case Bot.Common.Games.Games.Limbo: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowHighLow = false }; break;
-                default: PlaceBetVM = null; break;
-            }
+            PlaceBetVM = iPlaceBet.GetFromGame(newGame, _logger);
             if (PlaceBetVM!=null)
                 PlaceBetVM.GameSettings = config;
             if (PlaceBetVM != null && PlaceBetVM is INotifyPropertyChanged notify2)

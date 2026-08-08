@@ -2,6 +2,8 @@
 using Gambler.Bot.Common.Events;
 using Gambler.Bot.Common.Games;
 using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.RangeDice;
+using Gambler.Bot.Common.Games.Twist;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Events;
 using Gambler.Bot.Core.Helpers;
@@ -9,9 +11,11 @@ using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Sites.Classes;
 using Gambler.Bot.Core.Storage;
 using Gambler.Bot.Helpers;
+using Gambler.Bot.Interfaces;
 using Gambler.Bot.Strategies.Helpers;
 using Gambler.Bot.Strategies.Strategies;
 using Gambler.Bot.Strategies.Strategies.Abstractions;
+using Gambler.Bot.ViewModels;
 using Gambler.Bot.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -84,6 +88,7 @@ namespace Gambler.Bot.Classes
         }
 
         public PersonalSettings PersonalSettings { get; set; } = new PersonalSettings();
+        public IEmailProvider EmailProvider { get; set; }
         Bet MostRecentBet = null;
         DateTime MostRecentBetTime = new DateTime();
         PlaceBet NextBext = null;
@@ -526,6 +531,25 @@ namespace Gambler.Bot.Classes
             {
                 NextBext.Amount = BetSettings.MinBet;
             }
+            //doing it this way will override a value specified by the strategy
+            if (BetSettings.CheckHighLow(MostRecentBet, win, Stats, out bool NewHigh, SiteStats))
+            {
+                if (NextBext is PlaceDiceBet dice)
+                {
+                    dice.High = NewHigh;
+                }
+                else if (NextBext is PlaceTwistBet twist)
+                {
+                    twist.High = NewHigh;
+                }
+                else if (NextBext is PlaceRangeDiceBet range)
+                {
+                    if (range.Type == RangeDiceType.Out)
+                        range.Type = RangeDiceType.In;
+                    else if (range.Type == RangeDiceType.In)
+                        range.Type = RangeDiceType.Out;
+                }
+            }
             if (Running)
             {
                 decimal secondsPerBet = 0;
@@ -890,7 +914,7 @@ namespace Gambler.Bot.Classes
                                         case TriggerAction.Alarm:
                                         case TriggerAction.Chime:
                                         case TriggerAction.Popup: OnNotification?.Invoke(this, new NotificationEventArgs { NotificationTrigger = x }); break;
-                                        case TriggerAction.Email: throw new NotImplementedException("Supporting infrastructure for this still needs to be built.");
+                                        case TriggerAction.Email: if (EmailProvider!=null) await EmailProvider.SendEmail (x,CurrentSite.Stats,Stats); break;
                                     }
                                 }
                             }
@@ -950,10 +974,7 @@ namespace Gambler.Bot.Classes
                             if (CurrentSite.CanChangeSeed)
                                 await CurrentSite.ResetSeed("");
                         }
-                        if (BetSettings.CheckHighLow(MostRecentBet, win, Stats, out NewHigh, SiteStats))
-                        {
-                            (strategy as iDiceStrategy).High = NewHigh;
-                        }
+                       
                         if (Running)
                         {
                             if (!Reset)
@@ -966,6 +987,7 @@ namespace Gambler.Bot.Classes
                             
                             await PlaceBet(NextBext);
                         }
+                        
                     }
                     catch (Exception E)
                     {
@@ -1122,7 +1144,7 @@ namespace Gambler.Bot.Classes
                     }
                     else
                     {
-                        _Logger.LogError("DBInterface not initialized");
+                        
                     }
                 }
             }
@@ -1311,26 +1333,63 @@ namespace Gambler.Bot.Classes
             try
             {
                 _Logger?.LogInformation("Attempting DB Interface Creation: {DBProvider}", PersonalSettings.Provider);
-                DBInterface = new BotContext(_Logger);//create a bot context here. 
-                
-                DBInterface.Settings = PersonalSettings;
-                //if (!DBInterface.Database.EnsureCreated())
+                if (PersonalSettings.Provider != "None")
                 {
-                    try
+                    DBInterface = new BotContext(_Logger);//create a bot context here. 
+
+                    DBInterface.Settings = PersonalSettings;
+                    //if (!DBInterface.Database.EnsureCreated())
                     {
-                        DBInterface.Database.Migrate();
+                        try
+                        {
+                            DBInterface.Database.Migrate();
+                        }
+                        catch (Exception e)
+                        {
+                            _Logger?.LogError(e.ToString());
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        _Logger?.LogError(e.ToString());
-                    }
+                    _Logger?.LogInformation("DB Interface Created: {DBProvider}", PersonalSettings.Provider);
                 }
-                _Logger?.LogInformation("DB Interface Created: {DBProvider}", PersonalSettings.Provider);
+                else
+                    DBInterface = null;
             }
             catch (Exception e)
             {
                 _Logger?.LogError(e.ToString()); 
                 DBInterface = null;
+            }
+            LoadEmailProvider(InstanceViewModel.SettingsDirectory);
+        }
+
+        void LoadEmailProvider(string SettingsFolder)
+        {
+            //load email provider
+            try
+            {
+                
+                if (!string.IsNullOrWhiteSpace( PersonalSettings.EmailProviderType) )
+                {
+                    string settingsFile = Path.Combine(SettingsFolder, PersonalSettings.EmailProviderType + ".json");
+                    if (File.Exists(settingsFile))
+                    {
+                        //use reflection to find a clas that implements IEmailProvider with the provider name
+                        //if found,
+
+                        Type tProvider = IEmailProvider.GetTypeFromName(PersonalSettings.EmailProviderType);
+                        if (tProvider !=null)
+                        {
+                            IEmailProvider prov = JsonSerializer.Deserialize(File.ReadAllText(settingsFile), tProvider) as IEmailProvider;
+                            prov?.LoadSettings(SettingsFolder, null);
+                            EmailProvider = prov;
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 

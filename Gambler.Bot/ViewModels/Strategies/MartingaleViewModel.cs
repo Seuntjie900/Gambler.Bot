@@ -9,7 +9,7 @@ using System.ComponentModel;
 using static Gambler.Bot.Core.Sites.WolfBet;
 using System.Collections.Generic;
 using Gambler.Bot.Helpers;
-using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games;
 using ShimSkiaSharp;
 
 namespace Gambler.Bot.ViewModels.Strategies
@@ -111,13 +111,7 @@ namespace Gambler.Bot.ViewModels.Strategies
                 notify.PropertyChanged -= Notify2_PropertyChanged;
             }
             Game = newGame;
-            switch (Game)
-            {
-                case Bot.Common.Games.Games.Dice: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true };break;
-                case Bot.Common.Games.Games.Twist: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowToggle = true }; break;
-                case Bot.Common.Games.Games.Limbo: PlaceBetVM = new DicePlaceBetViewModel(_logger) { ShowHighLow=false }; break;
-                default: PlaceBetVM = null; break;
-            }
+            PlaceBetVM = iPlaceBet.GetFromGame(newGame, _logger);
             if (PlaceBetVM != null && PlaceBetVM is INotifyPropertyChanged notify2)
             {
                 notify2.PropertyChanged += Notify2_PropertyChanged;

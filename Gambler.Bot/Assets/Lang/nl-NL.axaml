@@ -31,6 +31,7 @@
     <system:String x:Key="Localization.InstanceView.Status">Status: </system:String>
     <system:String x:Key="Localization.InstanceView.LastAction">Laatste Actie:</system:String>
     <system:String x:Key="Localization.Common.Advanced.AutoWith">Auto opname/fooi</system:String>
+    <system:String x:Key="Localization.Common.Advanced.ZigZag">Zig Zag/Hoog laag</system:String>
     <system:String x:Key="Localization.Common.Strategy">Strategie</system:String>
     <system:String x:Key="Localization.Common.ResetSettings">Instellingen resetten</system:String>
     <system:String x:Key="Localization.Common.AdvancedSettings">Geavanceerde instellingen</system:String>
@@ -67,6 +68,9 @@
     <system:String x:Key="Localization.Common.LoggingIn">Inloggen...</system:String>
     <system:String x:Key="Localization.Common.LoginFailed">Inloggen mislukt</system:String>
     <system:String x:Key="Localization.Common.Filters">Meer filters en instellingen binnenkort beschikbaar (tm)</system:String>
+    <system:String x:Key="Localization.Common.MinMax">Minimum/Maximum inzet</system:String>
+    <system:String x:Key="Localization.Common.MinBet">Min inzet</system:String>
+    <system:String x:Key="Localization.Common.MaxBet">Max inzet</system:String>
     <system:String x:Key="Localization.Common.Advanced.BotSpeed">Bot Snelheid</system:String>
     <system:String x:Key="Localization.Common.Advanced.BetsPS">Inzetten per seconde</system:String>
     <system:String x:Key="Localization.Common.Advanced.UpperLimit">Bovengrens</system:String>
@@ -108,6 +112,7 @@
 
         <system:String x:Key="Localization.Common.SessionStats.TimeRunning">Looptijd</system:String>
   <system:String x:Key="Localization.Common.SessionStats.BettingSpeed">Inzetten/s</system:String>
+        <system:String x:Key="Localization.Common.SessionStats.AvgBettingSpeed">Gem. inzetten/s</system:String>
         <system:String x:Key="Localization.Common.SessionStats.Wagered">Ingezet</system:String>
         <system:String x:Key="Localization.Common.SessionStats.CurrentStreak">Huidige reeks</system:String>
         <system:String x:Key="Localization.Common.SessionStats.BestStreak">Beste reeks</system:String>
@@ -199,6 +204,8 @@
             <system:String x:Key="Localization.Games.Dice.Chance">Kans</system:String>
             <system:String x:Key="Localization.Games.Dice.Roll">Roll</system:String>
             <system:String x:Key="Localization.Games.Limbo.Result">Resultaat</system:String>
+            <system:String x:Key="Localization.Games.RangeDice.Range">Bereik</system:String>
+            <system:String x:Key="Localization.Games.RangeDice.Type">Type</system:String>
 
 
             <system:String x:Key="Localization.Strategy.DAlembert.Increment">Verhoging</system:String>
