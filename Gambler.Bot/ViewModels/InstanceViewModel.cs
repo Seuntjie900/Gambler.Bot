@@ -7,6 +7,8 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Gambler.Bot.Classes;
 using Gambler.Bot.Classes.BetsPanel;
+using Gambler.Bot.Classes.SiteBrowser;
+using Gambler.Bot.Classes.SiteClient;
 using Gambler.Bot.Classes.Strategies;
 using Gambler.Bot.Common.Events;
 using Gambler.Bot.Core.Events;
@@ -60,6 +62,7 @@ namespace Gambler.Bot.ViewModels
 
         private string lastAction;
         string PersonalSettingsFile = string.Empty;
+        private BrowserSiteClientFactory siteClientFactory;
         private bool showChart = true;
 
         private bool showLiveBets = true;
@@ -127,6 +130,20 @@ namespace Gambler.Bot.ViewModels
             ShowUserInput = new Interaction<UserInputViewModel, Unit?>();
             saveFile = new Interaction<FilePickerSaveOptions, string>();
             openFile = new Interaction<FilePickerOpenOptions, string>();
+            SiteBrowser = new SiteBrowser();
+            tmp.ExecJS = SiteBrowser.ExecuteScriptAsync;
+            if (!OperatingSystem.IsLinux())
+            {
+                // Browser transport is unsupported on Linux (dialog-only flow); logins there
+                // always fall back to the direct factory.
+                siteClientFactory = new BrowserSiteClientFactory(SiteBrowser, _logger);
+                tmp.SiteClientFactory = siteClientFactory;
+            }
+            BrowserBypass.RegisterHandler(OnBrowserBypass);
+            CFCaptchaBypass.RegisterHandler(OnCFCaptchaBypass);
+            BrowserCancelInteraction.RegisterHandler(OnBrowserCancel);
+            BrowserDoneInteraction.RegisterHandler(OnBrowserDone);
+
             tmp.Strategy = new Martingale(_logger);
             PlaceBetVM = new DicePlaceBetViewModel(_logger);
             LoginVM = new LoginViewModel(_logger) { Site = tmp, LoginFinished = LoginFinished };
@@ -162,12 +179,33 @@ namespace Gambler.Bot.ViewModels
 
         private void BrowserDone()
         {
-            
+            SiteBrowser?.FinishBypass();
         }
 
         private void BrowserCancel()
         {
-            
+            SiteBrowser?.CancelBypass();
+        }
+
+        private async Task OnBrowserBypass(IInteractionContext<BypassRequiredArgs, BrowserConfig> context)
+        {
+            var config = await SiteBrowser.CollectSessionAsync(context.Input);
+            context.SetOutput(config);
+        }
+
+        private async Task OnCFCaptchaBypass(IInteractionContext<string, Unit?> context)
+        {
+            await SiteBrowser.LoadCaptchaPageAsync(context.Input);
+        }
+
+        private void OnBrowserCancel(IInteractionContext<Unit?, Unit?> context)
+        {
+            SiteBrowser.CancelBypass();
+        }
+
+        private void OnBrowserDone(IInteractionContext<Unit?, Unit?> context)
+        {
+            SiteBrowser.FinishBypass();
         }
 
         private async Task Tmp_OnCFCaptchaBypass(string e)
@@ -669,6 +707,13 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             InstanceSettings tmp = JsonSerializer.Deserialize<InstanceSettings>(Settings);
             //botIns.ga
 
+            if (LoginVM != null)
+            {
+                LoginVM.SelectedConnectionMode = LoginVM.ConnectionModes.Contains(tmp.ConnectionMode)
+                    ? tmp.ConnectionMode
+                    : LoginViewModel.DirectMode;
+            }
+
             var tmpsite = Classes.AutoBet.Sites.FirstOrDefault(m => m.Name == tmp.Site);
             if (tmpsite != null)
             {
@@ -760,7 +805,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                     Site = botIns.SiteName,
                     AutoLogin = false,
                     Game = botIns.CurrentGame.ToString(),
-                    Currency = botIns.CurrentCurrency
+                    Currency = botIns.CurrentCurrency,
+                    ConnectionMode = LoginVM?.SelectedConnectionMode ?? LoginViewModel.DirectMode
                 });
             File.WriteAllText(FileLocation, Settings);
         }
@@ -1009,6 +1055,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         {
             botIns.StopStrategy("Application Closing");
             botIns.Disconnect();
+            siteClientFactory?.Dispose();
+            SiteBrowser?.Dispose();
             if (!UISettings.Resetting)
             {
                 botIns.SaveBetSettings(Path.Combine(BetSettingsFile));
@@ -1049,6 +1097,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                 this.RaisePropertyChanged();
             }
         }
+
+        public SiteBrowser SiteBrowser { get; }
 
         public bool CanResume
         {

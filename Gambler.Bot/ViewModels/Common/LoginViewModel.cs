@@ -24,6 +24,9 @@ namespace Gambler.Bot.ViewModels.Common
         public event EventHandler ChangeSite;
         public Action<bool> LoginFinished;
 
+        public const string DirectMode = "Direct";
+        public const string BrowserMode = "Built-in browser";
+
         public string Title
         {
             get { return $"Log in: {Site.SiteName}"; }            
@@ -41,6 +44,25 @@ namespace Gambler.Bot.ViewModels.Common
         {
             get { return selectedMirror; }
             set { selectedMirror = value; this.RaisePropertyChanged(); }
+        }
+
+        private readonly List<string> connectionModes = new List<string> { DirectMode, BrowserMode };
+
+        public List<string> ConnectionModes
+        {
+            get { return connectionModes; }
+        }
+
+        private string selectedConnectionMode = DirectMode;
+
+        /// <summary>
+        /// The selected per-login connection mode (persisted per instance via
+        /// <see cref="Gambler.Bot.Classes.InstanceSettings.ConnectionMode"/>).
+        /// </summary>
+        public string SelectedConnectionMode
+        {
+            get { return selectedConnectionMode; }
+            set { selectedConnectionMode = value; this.RaisePropertyChanged(); }
         }
         string error = "";
         public string Error
@@ -159,6 +181,23 @@ namespace Gambler.Bot.ViewModels.Common
             SelectedMirror = 0;
         }
 
+        /// <summary>
+        /// Applies the selected connection mode to the site before a login. On platforms where
+        /// the built-in browser transport is unsupported (Linux), it falls back to the direct
+        /// connection and notifies via the error text.
+        /// </summary>
+        private void ApplyConnectionMode()
+        {
+            bool useBrowser = string.Equals(SelectedConnectionMode, BrowserMode, StringComparison.Ordinal);
+            if (useBrowser && OperatingSystem.IsLinux())
+            {
+                useBrowser = false;
+                ShowError = true;
+                Error = "The built-in browser connection is not supported on Linux; using the direct connection.";
+            }
+            Site.UseBrowserTransport = useBrowser;
+        }
+
         public ICommand LoginCommand { get; }
 
         async Task LogIn()
@@ -177,6 +216,7 @@ namespace Gambler.Bot.ViewModels.Common
                 }
                 if (!ShowError)
                 {
+                    ApplyConnectionMode();
                     CanLogIn = false;
                     await Site.Login(Mirrors[SelectedMirror], LoginParams.ToArray());
                 }
@@ -189,7 +229,7 @@ namespace Gambler.Bot.ViewModels.Common
         {
             if (Site != null)
             {
-                
+                ApplyConnectionMode();
                 CanLogIn = false;
                 await Site.BrowserLogin(Mirrors[SelectedMirror]);
                 

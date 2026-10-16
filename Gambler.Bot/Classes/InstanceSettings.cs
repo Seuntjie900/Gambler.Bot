@@ -13,5 +13,6 @@ namespace Gambler.Bot.Classes
         public bool AutoLogin { get; set; }
         public string Game { get; set; }
         public string Currency { get; set; }
+        public string ConnectionMode { get; set; }
     }
 }
