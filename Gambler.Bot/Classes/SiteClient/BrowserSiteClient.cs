@@ -50,6 +50,7 @@ namespace Gambler.Bot.Classes.SiteClient
         {
             _factory = factory;
             _browser = browser;
+            browser.WebMessage += Browser_WebMessage;
             _logger = logger;
             options ??= new SiteClientOptions();
             _baseAddress = options.BaseAddress;
@@ -60,6 +61,18 @@ namespace Gambler.Bot.Classes.SiteClient
             }
         }
 
+        private void Browser_WebMessage(object? sender, string e)
+        {
+            using JsonDocument doc = JsonDocument.Parse(e);
+            JsonElement root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                return;
+            if (root.TryGetProperty("handler", out JsonElement type))
+            {
+                requests.Add(type.GetGuid(), e);
+            }
+        }
+
         public Uri BaseAddress
         {
             get => _baseAddress;
@@ -67,7 +80,7 @@ namespace Gambler.Bot.Classes.SiteClient
         }
 
         public IDictionary<string, string> DefaultHeaders => _defaultHeaders;
-
+        private Dictionary<Guid, string> requests = new Dictionary<Guid, string>();
         public Task<HttpResponseMessage> GetAsync(string uri, CancellationToken ct = default)
             => RequestAsync("GET", ResolveUri(uri), null, null, null, ct);
 
@@ -163,13 +176,19 @@ namespace Gambler.Bot.Classes.SiteClient
             }
             if (!string.IsNullOrWhiteSpace(contentType))
                 headers["Content-Type"] = contentType;
-
-            string js = BuildFetchScript(method, uri, body, headers);
+            Guid guid = Guid.NewGuid();
+            string js = BuildFetchScript(method, uri, body, headers, guid);
 
             string raw;
             try
             {
                 raw = await _browser.ExecuteScriptAsync(js).ConfigureAwait(false);
+                while (!requests.ContainsKey(guid))
+                {
+                    await Task.Delay(10);
+                }
+                raw = requests[guid];
+                requests.Remove(guid);
             }
             catch (OperationCanceledException)
             {
@@ -194,16 +213,37 @@ namespace Gambler.Bot.Classes.SiteClient
             }
         }
 
-        private static string BuildFetchScript(string method, Uri uri, string body, IDictionary<string, string> headers)
+        private static string BuildFetchScript(string method, Uri uri, string body, IDictionary<string, string> headers, Guid guid)
         {
             // All string literals are serialized with System.Text.Json so values cannot break
             // out of the JS string (injection-safe).
-            string urlJson = JsonSerializer.Serialize(uri.ToString());
+            string urlJson = JsonSerializer.Serialize(uri.PathAndQuery);
             string methodJson = JsonSerializer.Serialize(method.ToUpperInvariant());
             string headersJson = JsonSerializer.Serialize(headers);
             string bodyJson = body == null ? "null" : JsonSerializer.Serialize(body);
 
+
             return $@"(async () => {{
+  const res = await fetch({urlJson}, {{
+    method: {methodJson},    
+    body: {bodyJson},
+headers: {headersJson},
+    credentials: 'include',
+    redirect: 'follow'
+  }});
+  const text = await res.text();
+  const h = {{}};
+  res.headers.forEach((v, k) => h[k] = v);
+ window.chrome.webview.postMessage({{
+            handler: ""{guid.ToString()}"",
+            status: res.status, 
+headers: h, 
+body: text}});
+  return JSON.stringify({{ status: res.status, headers: h, body: text }});
+}})()";
+
+            /*
+             return $@"(async () => {{
   const res = await fetch({urlJson}, {{
     method: {methodJson},
     headers: {headersJson},
@@ -216,6 +256,7 @@ namespace Gambler.Bot.Classes.SiteClient
   res.headers.forEach((v, k) => h[k] = v);
   return JSON.stringify({{ status: res.status, headers: h, body: text }});
 }})()";
+             */
         }
 
         private static HttpResponseMessage ParseResponse(string raw, Uri requestUri)

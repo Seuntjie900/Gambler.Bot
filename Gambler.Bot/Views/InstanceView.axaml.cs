@@ -100,7 +100,7 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
             btnCancelBrowser.IsVisible = true;
             btnDoneBrowser.IsVisible = true;
             if (!OperatingSystem.IsLinux())
-                tabs.SelectedIndex = 1;
+                TabMenu.SelectedIndex = 1;
         });
     }
 
@@ -112,7 +112,7 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
             btnCancelBrowser.IsVisible = false;
             btnDoneBrowser.IsVisible = false;
             if (!OperatingSystem.IsLinux())
-                tabs.SelectedIndex = 0;
+                TabMenu.SelectedIndex = 0;
         });
     }
 
@@ -125,7 +125,7 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
             btnCancelBrowser.IsVisible = true;
             btnDoneBrowser.IsVisible = true;
             if (!OperatingSystem.IsLinux())
-                tabs.SelectedIndex = 1;
+                TabMenu.SelectedIndex = 1;
         });
     }
 
@@ -137,7 +137,7 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
             btnCancelBrowser.IsVisible = false;
             btnDoneBrowser.IsVisible = false;
             if (!OperatingSystem.IsLinux())
-                tabs.SelectedIndex = 0;
+                TabMenu.SelectedIndex = 0;
         });
     }
 

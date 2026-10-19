@@ -5,6 +5,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Gambler.Bot.Views.InstanceView"
              x:DataType="vm:InstanceViewModel"
+             xmlns:converters="using:Gambler.Bot.Converters"
              xmlns:vm="using:Gambler.Bot.ViewModels"
              xmlns:local="using:Gambler.Bot.Views"
              xmlns:common="using:Gambler.Bot.Views.Common"
@@ -30,10 +31,16 @@
              xmlns:actipro="http://schemas.actiprosoftware.com/avaloniaui"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              >
-
+    <UserControl.Resources>
+        <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
+    </UserControl.Resources>
     <Grid>
-<TabControl x:Name="tabs">
-    <TabItem Header="Bot">
+<Grid RowDefinitions="Auto, *">
+ <TabStrip Name="TabMenu" Grid.Row="0">
+        <TabStripItem Content="Bot" />
+        <TabStripItem Content="Browser" />
+    </TabStrip>
+    <Grid Grid.Row="1" IsVisible="{Binding #TabMenu.SelectedIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}">
         <DockPanel ClipToBounds="True">
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="{DynamicResource Localization.InstanceView.Menu.File}">
@@ -311,8 +318,8 @@
             </Grid>
 
         </DockPanel>
-    </TabItem>
-    <TabItem Header="Browser" IsVisible="{Binding ShowBrowser}">
+    </Grid>
+    <Grid Grid.Row="1" IsVisible="{Binding #TabMenu.SelectedIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}">
         <Grid Name="layoutgrd">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"></RowDefinition>
@@ -334,8 +341,8 @@
             </StackPanel>
 
         </Grid>
-    </TabItem>
-</TabControl>
+    </Grid>
+</Grid>
 
     </Grid>
 </UserControl>

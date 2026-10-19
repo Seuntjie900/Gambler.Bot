@@ -90,7 +90,14 @@ namespace Gambler.Bot.Classes.SiteBrowser
                 WebView.NavigationCompleted += OnNavigationCompleted;
                 WebView.WebMessageReceived += OnWebMessageReceived;
                 WebView.WebResourceRequested += OnWebResourceRequested;
+                WebView.NavigationStarted += WebView_NavigationStarted;
             }
+        }
+        int navcount = 0;
+        private void WebView_NavigationStarted(object? sender, WebViewNavigationStartingEventArgs e)
+        {
+            lock (_pendingNavigations)
+                navcount++;
         }
 
         /// <summary>Navigates the browser to <paramref name="url"/> and waits for the navigation to complete (or the wait times out).</summary>
@@ -149,7 +156,7 @@ namespace Gambler.Bot.Classes.SiteBrowser
                     ? "Please wait a moment. You do not need to log in to the website below, but please solve any captchas if there are any."
                     : "Please log in to the site below."));
 
-            var navigateTask = NavigateAsync(new Uri(args.URL));
+            await NavigateAsync(new Uri(args.URL));
 
             Task completion;
             if (args.HasTimeout)
@@ -585,6 +592,7 @@ namespace Gambler.Bot.Classes.SiteBrowser
             {
                 done = new List<TaskCompletionSource<bool>>(_pendingNavigations);
                 _pendingNavigations.Clear();
+                navcount--;
             }
             foreach (var tcs in done)
                 tcs.TrySetResult(true);
@@ -593,12 +601,14 @@ namespace Gambler.Bot.Classes.SiteBrowser
 
         private void OnWebMessageReceived(object sender, WebMessageReceivedEventArgs e)
         {
+            
             var body = e.Body;
             Task.Run(() => WebMessage?.Invoke(this, body));
         }
 
         private void OnWebResourceRequested(object sender, WebResourceRequestedEventArgs e)
         {
+            //e.Request.
             BypassRequiredArgs args;
             lock (_stateLock)
                 args = _args;
@@ -628,7 +638,9 @@ namespace Gambler.Bot.Classes.SiteBrowser
 
         private async Task WaitNavigationAsync(TaskCompletionSource<bool> tcs, TimeSpan timeout)
         {
+            await Task.Delay(new TimeSpan(0, 0, 15));//wait for at least 15 seconds for navigation
             var completed = await Task.WhenAny(tcs.Task, Task.Delay(timeout)).ConfigureAwait(false);
+            
             if (completed != tcs.Task)
                 tcs.TrySetResult(false);
         }
