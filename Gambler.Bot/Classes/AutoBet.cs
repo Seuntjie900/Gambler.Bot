@@ -9,6 +9,7 @@ using Gambler.Bot.Core.Events;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Sites.Classes;
+using Gambler.Bot.Core.SiteClient;
 using Gambler.Bot.Core.Storage;
 using Gambler.Bot.Helpers;
 using Gambler.Bot.Interfaces;
@@ -260,6 +261,8 @@ namespace Gambler.Bot.Classes
                     baseSite.ExecJS = BaseSite_ExecJS;
                     baseSite.OnBrowserBypassRequired = BaseSite_OnBrowserBypassRequired;
                     baseSite.OnCFCaptchaBypass = OnCFCaptchaBypass;
+                    if (SiteClientFactory != null)
+                        baseSite.SiteClientFactory = SiteClientFactory;
                     int tmpcurrency = baseSite.Currencies.FindIndex(x=>x.ToLower() == CurrentCurrency.ToLower());
                     if (tmpcurrency < 0)
                     {
@@ -340,7 +343,56 @@ namespace Gambler.Bot.Classes
             }
         }
         public  Func<string,Task> OnCFCaptchaBypass;
-        private Func<string, Task<string?>> ExecJS;
+
+        /// <summary>
+        /// Executes a script in the instance's built-in browser and returns the result.
+        /// Assigned by the host (e.g. InstanceViewModel wires it to its SiteBrowser) so
+        /// sites that fall back to <see cref="BaseSite.ExecJS"/> work in browser mode.
+        /// </summary>
+        public Func<string, Task<string?>> ExecJS;
+
+        private ISiteClientFactory siteClientFactory;
+
+        /// <summary>
+        /// The transport factory to use for the bot's site when <see cref="UseBrowserTransport"/>
+        /// is enabled (e.g. a browser-backed <see cref="ISiteClientFactory"/>). When null, the
+        /// direct <see cref="HttpClientSiteClientFactory"/> is always used.
+        /// </summary>
+        public ISiteClientFactory SiteClientFactory
+        {
+            get { return siteClientFactory; }
+            set
+            {
+                siteClientFactory = value;
+                if (CurrentSite != null)
+                {
+                    CurrentSite.SiteClientFactory = value;
+                }
+            }
+        }
+
+        private bool useBrowserTransport;
+
+        /// <summary>
+        /// When true, logins route the site's HTTP/WebSocket traffic through the host-provided
+        /// <see cref="SiteClientFactory"/> (built-in browser); otherwise the direct
+        /// <see cref="HttpClientSiteClientFactory"/> is used.
+        /// </summary>
+        public bool UseBrowserTransport
+        {
+            get { return useBrowserTransport; }
+            set { useBrowserTransport = value; this.RaisePropertyChanged(); }
+        }
+
+        /// <summary>Applies the selected transport to <see cref="CurrentSite"/> before a login.</summary>
+        private void ApplySiteClientFactory()
+        {
+            if (CurrentSite == null)
+                return;
+            CurrentSite.SiteClientFactory =
+                (UseBrowserTransport && SiteClientFactory != null) ? SiteClientFactory : new HttpClientSiteClientFactory();
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void BaseSite_StatsUpdated(object sender, StatsUpdatedEventArgs e)
@@ -593,6 +645,7 @@ namespace Gambler.Bot.Classes
             {
                 throw new Exception("Cannot login without a site. Assign a value to CurrentSite, then log in.");
             }
+            ApplySiteClientFactory();
             LoggedIn = await CurrentSite.LogIn(url,LoginParams);
             return LoggedIn;
         }
@@ -602,6 +655,7 @@ namespace Gambler.Bot.Classes
             {
                 throw new Exception("Cannot login without a site. Assign a value to CurrentSite, then log in.");
             }
+            ApplySiteClientFactory();
             LoggedIn = await CurrentSite.BrowserLogin(url);
             return LoggedIn;
         }
