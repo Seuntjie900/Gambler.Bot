@@ -3,7 +3,6 @@ using Gambler.Bot.Classes.SiteBrowser;
 using Gambler.Bot.Core.SiteClient;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using System.Threading;
@@ -30,7 +29,6 @@ namespace Gambler.Bot.Classes.SiteClient
     public class BrowserSiteSocket : ISiteSocket
     {
         private static readonly TimeSpan OpenTimeout = TimeSpan.FromSeconds(30);
-        private static readonly TimeSpan CloseGrace = TimeSpan.FromMilliseconds(500);
 
         /// <summary>
         /// The socket manager injected into the page on first use (idempotent, so it survives
@@ -125,6 +123,11 @@ window.__gbWs = {
             _ = OpenAsync();
         }
 
+        /// <summary>
+        /// Closes the socket. The close script is issued on the page (fire-and-forget with
+        /// logging on the UI thread, blocking otherwise) and <see cref="Closed"/> is raised
+        /// immediately; a late close event from the page is a no-op.
+        /// </summary>
         public void Close()
         {
             lock (_gate)
@@ -136,18 +139,6 @@ window.__gbWs = {
             }
 
             RunScript($"window.__gbWs.close({Id})", "close");
-            if (!OnUiThread())
-            {
-                // Wait briefly for the close event so State reflects the outcome; if it never
-                // arrives (e.g. the page navigated) ensure Closed is still raised below.
-                var sw = Stopwatch.StartNew();
-                while (sw.Elapsed < CloseGrace)
-                {
-                    if (State == SiteSocketState.Closed)
-                        return;
-                    Thread.Sleep(50);
-                }
-            }
             MarkClosed();
         }
 

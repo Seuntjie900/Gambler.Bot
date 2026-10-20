@@ -4,7 +4,6 @@ using Avalonia.Controls.Notifications;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Gambler.Bot.Classes.SiteBrowser;
 using Gambler.Bot.ViewModels;
 using Gambler.Bot.ViewModels.AppSettings;
 using Gambler.Bot.ViewModels.Common;
@@ -12,20 +11,11 @@ using Gambler.Bot.Views.AppSettings;
 using Gambler.Bot.Views.Common;
 using ReactiveUI;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
 using System.Reactive;
 using System.Threading.Tasks;
-using System.Reactive.Linq;
-using System.Threading;
-using Avalonia.Interactivity;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using Gambler.Bot.Classes;
-using Gambler.Bot.Core.Events;
-using Gambler.Bot.Core.Helpers;
 
 namespace Gambler.Bot.Views;
 
@@ -48,7 +38,6 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
                 ViewModel!.ShowSettings.RegisterHandler(ShowSettings);
                 ViewModel!.ShowBetHistory.RegisterHandler(ShowBetHistory);
                 ViewModel!.ExitInteraction.RegisterHandler(Close);
-                ViewModel!.ShowDialog.RegisterHandler(DoShowDialogAsync);
                 ViewModel!.ShowAbout.RegisterHandler(ShowAbout);
                 ViewModel!.ShowNotification.RegisterHandler(ShowNotification);
                 ViewModel!.ShowUserInput.RegisterHandler(ShowUserInput);
@@ -64,9 +53,9 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
     }
 
     /// <summary>
-    /// Wires the Browser tab UI to the <see cref="SiteBrowser"/> owned by the viewmodel:
-    /// hosts the webview, tracks bypass/captcha events, and triggers the Done/Cancel
-    /// interactions.
+    /// Creates and hosts the Browser tab's <see cref="NativeWebView"/> and injects it into the
+    /// browser owned by the viewmodel. Non-Linux only (Linux uses a per-session dialog); the
+    /// <c>_browserUiSetup</c> guard keeps the attach one-shot.
     /// </summary>
     private void SetupBrowserUi()
     {
@@ -74,79 +63,15 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
             return;
         _browserUiSetup = true;
 
-        var browser = ViewModel.SiteBrowser;
-        if (browser.WebView != null)
-        {
-            browser.WebView.BeginInit();
-            layoutgrd.Children.Add(browser.WebView);
-            Grid.SetRow(browser.WebView, 1);
-            browser.WebView.EndInit();
-        }
-        browser.BypassStarted += Browser_BypassStarted;
-        browser.BypassFinished += Browser_BypassFinished;
-        browser.CaptchaStarting += Browser_CaptchaStarting;
-        browser.CaptchaFinished += Browser_CaptchaFinished;
-        btnCancelBrowser.Click += (s, e) => _ = ViewModel.BrowserCancelInteraction.Handle(null);
-        btnDoneBrowser.Click += (s, e) => _ = ViewModel.BrowserDoneInteraction.Handle(null);
-    }
+        if (OperatingSystem.IsLinux())
+            return;
 
-    private void Browser_BypassStarted(object sender, BypassStartedEventArgs e)
-    {
-        RunOnUi(() =>
-        {
-            lblDisclaimer.IsVisible = true;
-            lblDisclaimer.ZIndex = -2;
-            lblDisclaimer.Text = e.Message;
-            btnCancelBrowser.IsVisible = true;
-            btnDoneBrowser.IsVisible = true;
-            if (!OperatingSystem.IsLinux())
-                TabMenu.SelectedIndex = 1;
-        });
-    }
-
-    private void Browser_BypassFinished(object sender, BrowserConfig e)
-    {
-        RunOnUi(() =>
-        {
-            lblDisclaimer.IsVisible = false;
-            btnCancelBrowser.IsVisible = false;
-            btnDoneBrowser.IsVisible = false;
-            if (!OperatingSystem.IsLinux())
-                TabMenu.SelectedIndex = 0;
-        });
-    }
-
-    private void Browser_CaptchaStarting(object sender, EventArgs e)
-    {
-        RunOnUi(() =>
-        {
-            lblDisclaimer.IsVisible = true;
-            lblDisclaimer.ZIndex = -2;
-            btnCancelBrowser.IsVisible = true;
-            btnDoneBrowser.IsVisible = true;
-            if (!OperatingSystem.IsLinux())
-                TabMenu.SelectedIndex = 1;
-        });
-    }
-
-    private void Browser_CaptchaFinished(object sender, EventArgs e)
-    {
-        RunOnUi(() =>
-        {
-            lblDisclaimer.IsVisible = false;
-            btnCancelBrowser.IsVisible = false;
-            btnDoneBrowser.IsVisible = false;
-            if (!OperatingSystem.IsLinux())
-                TabMenu.SelectedIndex = 0;
-        });
-    }
-
-    private static void RunOnUi(Action action)
-    {
-        if (Dispatcher.UIThread.CheckAccess())
-            action();
-        else
-            Dispatcher.UIThread.Post(action);
+        var webview = new NativeWebView();
+        webview.BeginInit();
+        layoutgrd.Children.Add(webview);
+        Grid.SetRow(webview, 1);
+        webview.EndInit();
+        ViewModel.AttachWebView(webview);
     }
 
     private async Task ShowUserInput(IInteractionContext<UserInputViewModel, Unit?> context)
@@ -223,16 +148,6 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
         ViewModel.Loaded();
     }
 
-    private async Task DoShowDialogAsync(IInteractionContext<LoginViewModel,
-                                        LoginViewModel?> interaction)
-    {
-        var dialog = new LoginView();
-        dialog.DataContext = interaction.Input;
-        var ParentWindow = this.FindAncestorOfType<Window>();
-        //var result = await dialog.ShowDialog<LoginViewModel?>(ParentWindow);
-        //interaction.SetOutput(result);
-    }
-
     private async Task ShowRollVerifier(IInteractionContext<RollVerifierViewModel,
                                         Unit?> interaction)
     {
@@ -300,10 +215,6 @@ public partial class InstanceView : ReactiveUserControl<InstanceViewModel>
     {
         // Handle window closing logic here
         ViewModel.OnClosing();
-    }
-
-    private void Binding(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
     }
 
     private void OnMenuItemClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

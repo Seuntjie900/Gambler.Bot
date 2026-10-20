@@ -36,7 +36,7 @@
     </UserControl.Resources>
     <Grid>
 <Grid RowDefinitions="Auto, *">
- <TabStrip Name="TabMenu" Grid.Row="0">
+  <TabStrip Name="TabMenu" Grid.Row="0" SelectedIndex="{Binding BrowserTabIndex, Mode=TwoWay}">
         <TabStripItem Content="Bot" />
         <TabStripItem Content="Browser" />
     </TabStrip>
@@ -326,18 +326,18 @@
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" x:Name="lblDisclaimer"
-                       Background="{actipro:ThemeResource Container2BackgroundBrush}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Top"
-                       FontSize="24"
-                       MaxWidth="600"
-                       TextWrapping="Wrap"
-                       Text="Please wait while we try to establish a connection to the site."
-                       IsVisible="False"/>
+            <TextBlock Grid.Row="0"
+                        Background="{actipro:ThemeResource Container2BackgroundBrush}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        FontSize="24"
+                        MaxWidth="600"
+                        TextWrapping="Wrap"
+                        Text="{Binding BrowserDisclaimerText}"
+                        IsVisible="{Binding BrowserDisclaimerVisible}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" >
-                <Button Content="Cancel" Name="btnCancelBrowser" IsVisible="False" />
-                <Button Content="Done" Name="btnDoneBrowser" IsVisible="False" />
+                <Button Content="Cancel" Command="{Binding BrowserCancelCommand}" IsVisible="{Binding ShowBrowserButtons}" />
+                <Button Content="Done" Command="{Binding BrowserDoneCommand}" IsVisible="{Binding ShowBrowserButtons}" />
             </StackPanel>
 
         </Grid>

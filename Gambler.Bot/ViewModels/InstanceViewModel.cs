@@ -68,7 +68,6 @@ namespace Gambler.Bot.ViewModels
         private bool showLiveBets = true;
         private bool showSites = false;
         private bool showStats = true;
-        private bool showBrowser = true;
         
 
         private string title;
@@ -98,8 +97,8 @@ namespace Gambler.Bot.ViewModels
             StopCommand = ReactiveCommand.Create(Stop);
             ResumeCommand = ReactiveCommand.Create(Resume);
             StopOnWinCommand = ReactiveCommand.Create(StopOnWin);
-            BrowserCancelCommand = ReactiveCommand.Create(BrowserCancel);
-            BrowserDoneCommand = ReactiveCommand.Create(BrowserDone);
+            BrowserCancelCommand = ReactiveCommand.Create(() => BypassSession.Cancel());
+            BrowserDoneCommand = ReactiveCommand.Create(() => BypassSession.Finish());
 
             LogOutCommand = ReactiveCommand.Create(LogOut);
             ChangeSiteCommand = ReactiveCommand.Create(ChangeSite);
@@ -115,22 +114,22 @@ namespace Gambler.Bot.ViewModels
             SelectSite = new SelectSiteViewModel(_logger);
             SelectSite.SelectedSiteChanged += SelectSite_SelectedSiteChanged;
             IsSelectSiteViewVisible = true;
-            BrowserBypass = new Interaction<BypassRequiredArgs, BrowserConfig>();
-            CFCaptchaBypass = new Interaction<string, Unit?>();
-            ShowDialog = new Interaction<LoginViewModel, LoginViewModel?>();
             ShowAbout = new Interaction<AboutViewModel, Unit?>();
             ShowSimulation = new Interaction<SimulationViewModel, SimulationViewModel?>();
             ShowRollVerifier = new Interaction<RollVerifierViewModel, Unit?>();
             ExitInteraction = new Interaction<Unit?, Unit?>();
-            BrowserCancelInteraction = new Interaction<Unit?, Unit?>();
-            BrowserDoneInteraction = new Interaction<Unit?, Unit?>();
             ShowSettings = new Interaction<GlobalSettingsViewModel, Unit?>();
             ShowBetHistory = new Interaction<BetHistoryViewModel, Unit?>();
             ShowNotification = new Interaction<INotification, Unit?>();
             ShowUserInput = new Interaction<UserInputViewModel, Unit?>();
             saveFile = new Interaction<FilePickerSaveOptions, string>();
             openFile = new Interaction<FilePickerOpenOptions, string>();
-            SiteBrowser = new SiteBrowser();
+            SiteBrowser = new SiteBrowser(_logger);
+            BypassSession = new BypassSession(SiteBrowser, _logger);
+            BypassSession.Started += BypassSession_Started;
+            BypassSession.Finished += BypassSession_Finished;
+            SiteBrowser.CaptchaStarting += SiteBrowser_CaptchaStarting;
+            SiteBrowser.CaptchaFinished += SiteBrowser_CaptchaFinished;
             tmp.ExecJS = SiteBrowser.ExecuteScriptAsync;
             if (!OperatingSystem.IsLinux())
             {
@@ -139,10 +138,6 @@ namespace Gambler.Bot.ViewModels
                 siteClientFactory = new BrowserSiteClientFactory(SiteBrowser, _logger);
                 tmp.SiteClientFactory = siteClientFactory;
             }
-            BrowserBypass.RegisterHandler(OnBrowserBypass);
-            CFCaptchaBypass.RegisterHandler(OnCFCaptchaBypass);
-            BrowserCancelInteraction.RegisterHandler(OnBrowserCancel);
-            BrowserDoneInteraction.RegisterHandler(OnBrowserDone);
 
             tmp.Strategy = new Martingale(_logger);
             PlaceBetVM = new DicePlaceBetViewModel(_logger);
@@ -177,47 +172,9 @@ namespace Gambler.Bot.ViewModels
             SiteStatsData.StatsUpdated(botIns.SiteStats);
         }
 
-        private void BrowserDone()
-        {
-            SiteBrowser?.FinishBypass();
-        }
-
-        private void BrowserCancel()
-        {
-            SiteBrowser?.CancelBypass();
-        }
-
-        private async Task OnBrowserBypass(IInteractionContext<BypassRequiredArgs, BrowserConfig> context)
-        {
-            var config = await SiteBrowser.CollectSessionAsync(context.Input);
-            context.SetOutput(config);
-        }
-
-        private async Task OnCFCaptchaBypass(IInteractionContext<string, Unit?> context)
-        {
-            await SiteBrowser.LoadCaptchaPageAsync(context.Input);
-        }
-
-        private void OnBrowserCancel(IInteractionContext<Unit?, Unit?> context)
-        {
-            SiteBrowser.CancelBypass();
-        }
-
-        private void OnBrowserDone(IInteractionContext<Unit?, Unit?> context)
-        {
-            SiteBrowser.FinishBypass();
-        }
-
         private async Task Tmp_OnCFCaptchaBypass(string e)
         {
-            try
-            {
-                await CFCaptchaBypass?.Handle(e);
-            }
-            catch (Exception ex)
-            {
-                
-            }
+            await SiteBrowser.LoadCaptchaPageAsync(e);
         }
 
        
@@ -888,7 +845,6 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                 //LoginVM.Site = botIns;
                 LoginVM.RefreshParams();
                 LoginVM.LoginFinished = LoginFinished;
-                /*var result = await ShowDialog.Handle(store);*/
             }
             catch (Exception e)
             {
@@ -978,8 +934,7 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private async Task<BrowserConfig> Tmp_OnBypassRequired(BypassRequiredArgs e)
         {
-            e.Config = await BrowserBypass.Handle(e);
-            return e.Config;
+            return await BypassSession.StartAsync(e);
         }
 
         private void Tmp_OnSiteError(object sender, Bot.Common.Events.ErrorEventArgs e)
@@ -1056,6 +1011,7 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             botIns.StopStrategy("Application Closing");
             botIns.Disconnect();
             siteClientFactory?.Dispose();
+            BypassSession?.Dispose();
             SiteBrowser?.Dispose();
             if (!UISettings.Resetting)
             {
@@ -1099,6 +1055,99 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         }
 
         public SiteBrowser SiteBrowser { get; }
+
+        public BypassSession BypassSession { get; }
+
+        private bool _browserDisclaimerVisible;
+        public bool BrowserDisclaimerVisible
+        {
+            get => _browserDisclaimerVisible;
+            set { _browserDisclaimerVisible = value; this.RaisePropertyChanged(); }
+        }
+
+        private string _browserDisclaimerText = string.Empty;
+        public string BrowserDisclaimerText
+        {
+            get => _browserDisclaimerText;
+            set { _browserDisclaimerText = value; this.RaisePropertyChanged(); }
+        }
+
+        private bool _showBrowserButtons;
+        public bool ShowBrowserButtons
+        {
+            get => _showBrowserButtons;
+            set { _showBrowserButtons = value; this.RaisePropertyChanged(); }
+        }
+
+        private int _browserTabIndex;
+        public int BrowserTabIndex
+        {
+            get => _browserTabIndex;
+            set { _browserTabIndex = value; this.RaisePropertyChanged(); }
+        }
+
+        /// <summary>
+        /// Attaches the hosting view's <see cref="Avalonia.Controls.NativeWebView"/> to the
+        /// browser (non-Linux only, one-shot).
+        /// </summary>
+        public void AttachWebView(Avalonia.Controls.NativeWebView webview)
+        {
+            SiteBrowser.AttachWebView(webview);
+        }
+
+        private void BypassSession_Started(object? sender, BypassStartedEventArgs e)
+        {
+            RaiseBrowserUiState(() =>
+            {
+                BrowserDisclaimerVisible = true;
+                BrowserDisclaimerText = e.Message;
+                ShowBrowserButtons = true;
+                if (!OperatingSystem.IsLinux())
+                    BrowserTabIndex = 1;
+            });
+        }
+
+        private void BypassSession_Finished(object? sender, BrowserConfig e)
+        {
+            RaiseBrowserUiState(() =>
+            {
+                BrowserDisclaimerVisible = false;
+                ShowBrowserButtons = false;
+                if (!OperatingSystem.IsLinux())
+                    BrowserTabIndex = 0;
+            });
+        }
+
+        private void SiteBrowser_CaptchaStarting(object? sender, EventArgs e)
+        {
+            RaiseBrowserUiState(() =>
+            {
+                BrowserDisclaimerVisible = true;
+                BrowserDisclaimerText = "Please complete the captcha below.";
+                ShowBrowserButtons = true;
+                if (!OperatingSystem.IsLinux())
+                    BrowserTabIndex = 1;
+            });
+        }
+
+        private void SiteBrowser_CaptchaFinished(object? sender, EventArgs e)
+        {
+            RaiseBrowserUiState(() =>
+            {
+                BrowserDisclaimerVisible = false;
+                ShowBrowserButtons = false;
+                if (!OperatingSystem.IsLinux())
+                    BrowserTabIndex = 0;
+            });
+        }
+
+        private static void RaiseBrowserUiState(Action action)
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+                action();
+            else
+                Dispatcher.UIThread.Post(action);
+        }
 
         public bool CanResume
         {
@@ -1270,11 +1319,6 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
                 this.RaisePropertyChanged();
             }
         }
-        public Interaction<BypassRequiredArgs?,BrowserConfig> BrowserBypass { get; }
-        public Interaction<string,Unit?> CFCaptchaBypass { get; }
-        
-        public Interaction<LoginViewModel, LoginViewModel?> ShowDialog { get; }
-
         public Interaction<AboutViewModel, Unit?> ShowAbout { get; }
 
         public bool ShowLiveBets
@@ -1313,16 +1357,6 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             }
         }
         
-        public bool ShowBrowser
-        {
-            get { return showBrowser; }
-            set
-            {
-                showBrowser = value;
-                this.RaisePropertyChanged();
-            }
-        }
-
         public ICommand SimulateCommand { get; }
 
         public SiteStatsViewModel SiteStatsData { get; set; }// = new SiteStatsViewModel();
@@ -1395,8 +1429,6 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         public TriggersViewModel TriggersVM { get; set; }
 
         public Interaction<Unit?, Unit?> ExitInteraction { get; internal set; }
-        public Interaction<Unit?, Unit?> BrowserCancelInteraction { get; internal set; }
-        public Interaction<Unit?, Unit?> BrowserDoneInteraction { get; internal set; }
 
         public Interaction<RollVerifierViewModel, Unit?> ShowRollVerifier { get; internal set; }
 

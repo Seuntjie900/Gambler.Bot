@@ -3,6 +3,7 @@ using Gambler.Bot.Core.SiteClient;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -30,6 +31,10 @@ namespace Gambler.Bot.Classes.SiteClient
     /// (e.g. <c>api.cryptogames.org</c> from <c>cryptogames.org</c>).
     /// </para>
     /// <para>
+    /// Each request is given 60 seconds for the page to answer via <c>postMessage</c>; after that
+    /// the call fails with an <see cref="HttpRequestException"/> instead of waiting forever.
+    /// </para>
+    /// <para>
     /// The browser's own <c>User-Agent</c> is used, and request <c>Cookie</c> values come from the
     /// browser's cookie jar, so <c>SiteClientOptions.Cookies</c> and <c>SiteClientOptions.UserAgent</c>
     /// are not applied in this implementation (documented behavior). Browsers silently drop
@@ -42,7 +47,10 @@ namespace Gambler.Bot.Classes.SiteClient
         private readonly BrowserSiteClientFactory _factory;
         private readonly SiteBrowser _browser;
         private readonly ILogger _logger;
+        private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(60);
+
         private readonly HeaderDictionary _defaultHeaders = new HeaderDictionary();
+        private readonly ConcurrentDictionary<Guid, TaskCompletionSource<string>> _pending = new ConcurrentDictionary<Guid, TaskCompletionSource<string>>();
         private Uri _baseAddress;
         private bool _disposed;
 
@@ -63,14 +71,32 @@ namespace Gambler.Bot.Classes.SiteClient
 
         private void Browser_WebMessage(object? sender, string e)
         {
-            using JsonDocument doc = JsonDocument.Parse(e);
-            JsonElement root = doc.RootElement;
-            if (root.ValueKind != JsonValueKind.Object)
-                return;
-            if (root.TryGetProperty("handler", out JsonElement type))
+            try
             {
-                requests.Add(type.GetGuid(), e);
+                using JsonDocument doc = JsonDocument.Parse(e);
+                JsonElement root = doc.RootElement;
+                if (root.ValueKind != JsonValueKind.Object)
+                    return;
+                if (root.TryGetProperty("handler", out JsonElement type))
+                {
+                    TryComplete(type.GetGuid(), e);
+                }
             }
+            catch (Exception ex)
+            {
+                _logger?.LogDebug(ex, "Ignoring a webview message that is not a well-formed fetch response.");
+            }
+        }
+
+        /// <summary>
+        /// Completes the in-flight request with the given id (if this client owns one) with the
+        /// raw <c>postMessage</c> payload; messages for other ids or already-settled requests are
+        /// ignored.
+        /// </summary>
+        internal void TryComplete(Guid id, string payload)
+        {
+            if (_pending.TryRemove(id, out TaskCompletionSource<string> tcs))
+                tcs.TrySetResult(payload);
         }
 
         public Uri BaseAddress
@@ -80,7 +106,7 @@ namespace Gambler.Bot.Classes.SiteClient
         }
 
         public IDictionary<string, string> DefaultHeaders => _defaultHeaders;
-        private Dictionary<Guid, string> requests = new Dictionary<Guid, string>();
+
         public Task<HttpResponseMessage> GetAsync(string uri, CancellationToken ct = default)
             => RequestAsync("GET", ResolveUri(uri), null, null, null, ct);
 
@@ -146,14 +172,18 @@ namespace Gambler.Bot.Classes.SiteClient
         }
 
         /// <summary>
-        /// Detaches from the factory tracking. The webview is owned by the
-        /// <see cref="SiteBrowser"/> and is never closed by this client.
+        /// Detaches from the factory tracking and fails any in-flight requests. The webview is
+        /// owned by the <see cref="SiteBrowser"/> and is never closed by this client.
         /// </summary>
         public void Dispose()
         {
             if (_disposed)
                 return;
             _disposed = true;
+            _browser.WebMessage -= Browser_WebMessage;
+            foreach (KeyValuePair<Guid, TaskCompletionSource<string>> entry in _pending)
+                entry.Value.TrySetCanceled();
+            _pending.Clear();
             _factory.UnregisterClient(this);
         }
 
@@ -176,21 +206,30 @@ namespace Gambler.Bot.Classes.SiteClient
             }
             if (!string.IsNullOrWhiteSpace(contentType))
                 headers["Content-Type"] = contentType;
-            Guid guid = Guid.NewGuid();
-            string js = BuildFetchScript(method, uri, body, headers, guid);
+            Guid id = Guid.NewGuid();
+            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _pending[id] = tcs;
+            string js = BuildFetchScript(method, uri, body, headers, id);
 
-            string raw;
+            string payload;
             try
             {
-                raw = await _browser.ExecuteScriptAsync(js).ConfigureAwait(false);
-                while (!requests.ContainsKey(guid))
+                // Await the script so the fetch is started; the result is discarded because the
+                // response arrives via postMessage (TryComplete).
+                await _browser.ExecuteScriptAsync(js).ConfigureAwait(false);
+                Task completed = await Task.WhenAny(tcs.Task, Task.Delay(RequestTimeout)).ConfigureAwait(false);
+                if (completed != tcs.Task)
                 {
-                    await Task.Delay(10);
+                    tcs.TrySetCanceled();
+                    throw new HttpRequestException("The browser transport did not return a response in time.");
                 }
-                raw = requests[guid];
-                requests.Remove(guid);
+                payload = await tcs.Task.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (HttpRequestException)
             {
                 throw;
             }
@@ -198,10 +237,14 @@ namespace Gambler.Bot.Classes.SiteClient
             {
                 throw new HttpRequestException($"The browser transport failed to send the request to '{uri}'.", ex);
             }
+            finally
+            {
+                _pending.TryRemove(id, out _);
+            }
 
             try
             {
-                return ParseResponse(raw, uri);
+                return ParseResponse(payload, uri);
             }
             catch (HttpRequestException)
             {
@@ -222,41 +265,23 @@ namespace Gambler.Bot.Classes.SiteClient
             string headersJson = JsonSerializer.Serialize(headers);
             string bodyJson = body == null ? "null" : JsonSerializer.Serialize(body);
 
-
             return $@"(async () => {{
   const res = await fetch({urlJson}, {{
-    method: {methodJson},    
-    body: {bodyJson},
-headers: {headersJson},
-    credentials: 'include',
-    redirect: 'follow'
-  }});
-  const text = await res.text();
-  const h = {{}};
-  res.headers.forEach((v, k) => h[k] = v);
- window.chrome.webview.postMessage({{
-            handler: ""{guid.ToString()}"",
-            status: res.status, 
-headers: h, 
-body: text}});
-  return JSON.stringify({{ status: res.status, headers: h, body: text }});
-}})()";
-
-            /*
-             return $@"(async () => {{
-  const res = await fetch({urlJson}, {{
     method: {methodJson},
-    headers: {headersJson},
     body: {bodyJson},
+    headers: {headersJson},
     credentials: 'include',
     redirect: 'follow'
   }});
   const text = await res.text();
   const h = {{}};
   res.headers.forEach((v, k) => h[k] = v);
-  return JSON.stringify({{ status: res.status, headers: h, body: text }});
+  window.chrome.webview.postMessage({{
+    handler: ""{guid.ToString()}"",
+    status: res.status,
+    headers: h,
+    body: text}});
 }})()";
-             */
         }
 
         private static HttpResponseMessage ParseResponse(string raw, Uri requestUri)
