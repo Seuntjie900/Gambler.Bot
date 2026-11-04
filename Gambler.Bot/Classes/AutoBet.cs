@@ -229,10 +229,10 @@ namespace Gambler.Bot.Classes
         #region Site Stuff
         private BaseSite baseSite;
 
-        protected BaseSite CurrentSite
+        public BaseSite CurrentSite
         {
             get { return baseSite; }
-            set
+            protected set
             {
                 if (baseSite!=null)
                 {
@@ -586,6 +586,9 @@ namespace Gambler.Bot.Classes
             //doing it this way will override a value specified by the strategy
             if (BetSettings.CheckHighLow(MostRecentBet, win, Stats, out bool NewHigh, SiteStats))
             {
+                //keep the strategy's own high/low state in sync, otherwise the next
+                //non-switching bet reverts to the strategy's internal direction
+                Strategy.SetHigh(NewHigh);
                 if (NextBext is PlaceDiceBet dice)
                 {
                     dice.High = NewHigh;
@@ -619,10 +622,18 @@ namespace Gambler.Bot.Classes
                 maxDelay = System.Math.Max(maxDelay,strategy.GetBetDelay()-TimeSinceLastBet);
                 if (maxDelay > 0 )
                 {
-                    
-                    
-                    Thread.Sleep((int)maxDelay);
-                    maxDelay = 0;
+                    //sleep in small chunks so a Stop click interrupts the delay
+                    int remaining = (int)maxDelay;
+                    while (remaining > 0 && Running)
+                    {
+                        int chunk = Math.Min(100, remaining);
+                        Thread.Sleep(chunk);
+                        remaining -= chunk;
+                    }
+                    if (!Running)
+                    {
+                        return null;
+                    }
                 }
                 return NextBext;
             }
@@ -901,7 +912,7 @@ namespace Gambler.Bot.Classes
         {
             await Task.Run(async () =>
             {
-                if (!resume)
+                if (!resume && Running)
                     await PlaceBet(Strategy.Start(CurrentGame));
                 if (MostRecentBet==null)
                 {
@@ -1033,12 +1044,17 @@ namespace Gambler.Bot.Classes
                         {
                             if (!Reset)
                              NextBext = CalculateNextBet();
+                            //stop may have been clicked while the bet delay was running
+                            if (!Running)
+                            {
+                                return;
+                            }
                             if (NextBext == null)
                             {
                                 StopStrategy("Strategy failed to generate next bet.");
                                 return;
                             }
-                            
+
                             await PlaceBet(NextBext);
                         }
                         
@@ -1107,28 +1123,32 @@ namespace Gambler.Bot.Classes
             if (Stats != null)
             {
                 Stats.EndTime = DateTime.Now;
-                Stats.RunningTime += (long)(Stats.EndTime - Stats.StartTime).TotalMilliseconds;
-                if (wasrunning && DBInterface != null)
+                //only account for the run once, so repeated stops (double clicks) don't double count
+                if (wasrunning)
                 {
-                    
-                    if (Stats.SessionStatsId<=0)
-                        DBInterface.Add(Stats);
-                    else if (DBInterface.Entry(Stats).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
+                    Stats.RunningTime += (long)(Stats.EndTime - Stats.StartTime).TotalMilliseconds;
+                    if (DBInterface != null)
                     {
-                        DBInterface.Attach(Stats);
-                        DBInterface.Entry(Stats).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                    }
-                    try
-                    {
-                        DBInterface?.SaveChanges();
-                    }
-                    catch (Exception e)
-                    {
-                        _Logger.LogError(e.ToString());
+
+                        if (Stats.SessionStatsId<=0)
+                            DBInterface.Add(Stats);
+                        else if (DBInterface.Entry(Stats).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
+                        {
+                            DBInterface.Attach(Stats);
+                            DBInterface.Entry(Stats).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                        }
+                        try
+                        {
+                            DBInterface?.SaveChanges();
+                        }
+                        catch (Exception e)
+                        {
+                            _Logger.LogError(e.ToString());
+                        }
                     }
                 }
             }
-            
+
             //TotalRuntime +=Stats.EndTime - Stats.StartTime;
             _Logger?.LogInformation(Reason);
             OnStopped?.Invoke(this, new GenericEventArgs { Message = Reason });
