@@ -90,7 +90,7 @@ namespace Gambler.Bot.Classes
 
         public PersonalSettings PersonalSettings { get; set; } = new PersonalSettings();
         public IEmailProvider EmailProvider { get; set; }
-        Bet MostRecentBet = null;
+        public Bet MostRecentBet { get; private set; } = null;
         DateTime MostRecentBetTime = new DateTime();
         PlaceBet NextBext = null;
         int Retries = 0;
@@ -1078,7 +1078,7 @@ namespace Gambler.Bot.Classes
                 BetTimer.Enabled = true;
                 OnStarted?.Invoke(this, new EventArgs());
                 //CalculateNextBet();
-                RunningThread = RunBot();
+                RunningThread = RunBot(MostRecentBet != null);
             }
         }
         

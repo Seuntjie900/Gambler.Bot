@@ -789,7 +789,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             CanResume = ((botIns?.LoggedIn ?? false) &&
                 botIns.Strategy != null &&
                 !botIns.Running &&
-                !botIns.RunningSimulation);
+                !botIns.RunningSimulation &&
+                botIns.MostRecentBet != null);
         }
         void setCanStart()
         {
