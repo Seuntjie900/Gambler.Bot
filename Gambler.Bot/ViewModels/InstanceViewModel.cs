@@ -941,12 +941,22 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         private void Tmp_OnSiteError(object sender, Bot.Common.Events.ErrorEventArgs e)
         {
             if (!Dispatcher.UIThread.CheckAccess())
-                Dispatcher.UIThread
-                    .Invoke(
-                        () =>
-                        {
-                            Tmp_OnSiteError(sender, e);
-                        });
+            {
+                if (UISettings.Settings.AsyncUIUpdates)
+                    Dispatcher.UIThread
+                        .Post(
+                            () =>
+                            {
+                                Tmp_OnSiteError(sender, e);
+                            });
+                else
+                    Dispatcher.UIThread
+                        .Invoke(
+                            () =>
+                            {
+                                Tmp_OnSiteError(sender, e);
+                            });
+            }
             else
             {
                 StatusMessage = e.Message;
@@ -957,12 +967,22 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         private void Tmp_OnSiteNotify(object sender, GenericEventArgs e)
         {
             if (!Dispatcher.UIThread.CheckAccess())
-                Dispatcher.UIThread
-                    .Invoke(
-                        () =>
-                        {
-                            Tmp_OnSiteNotify(sender, e);
-                        });
+            {
+                if (UISettings.Settings.AsyncUIUpdates)
+                    Dispatcher.UIThread
+                        .Post(
+                            () =>
+                            {
+                                Tmp_OnSiteNotify(sender, e);
+                            });
+                else
+                    Dispatcher.UIThread
+                        .Invoke(
+                            () =>
+                            {
+                                Tmp_OnSiteNotify(sender, e);
+                            });
+            }
             else
             {
                 StatusMessage = e.Message;

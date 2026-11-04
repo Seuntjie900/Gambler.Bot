@@ -60,8 +60,10 @@
                     <NumericUpDown Value="{Binding UiSettings.LiveBets}" />
                     <TextBlock Text="Number of bets in live bets chart" />
                     <NumericUpDown Value="{Binding UiSettings.ChartBets}"/>
-					<TextBlock Text="Number of lines to display in the console" />
-					<NumericUpDown Value="{Binding UiSettings.ConsoleLines}"/>
+ 					<TextBlock Text="Number of lines to display in the console" />
+ 					<NumericUpDown Value="{Binding UiSettings.ConsoleLines}"/>
+ 					<TextBlock Text="Async UI updates (don't block betting while the UI updates)" />
+ 					<CheckBox IsChecked="{Binding UiSettings.AsyncUIUpdates}"/>
                 </StackPanel>
             </Expander>
             <Expander IsExpanded="True"  Width="250" Margin="5" Header="{Binding}">
