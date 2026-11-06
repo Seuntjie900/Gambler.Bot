@@ -322,6 +322,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private void BotIns_OnGameChanged(object? sender, EventArgs e)
         {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                Dispatcher.UIThread.Invoke(() => BotIns_OnGameChanged(sender, e));
+                return;
+            }
             if (PlaceBetVM != null)
                 PlaceBetVM.PlaceBet -= PlaceBetVM_PlaceBet;
 
@@ -372,20 +377,32 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private async void BotIns_OnSiteBetFinished(object sender, BetFinisedEventArgs e)
         {
-            if (e.NewBet != null)
+            try
             {
-                SiteStatsData.StatsUpdated(botIns.SiteStats);
-                SessionStatsData.StatsUpdated(botIns.Stats);
-                ChartData.AddPoint(e.NewBet.Profit, e.NewBet.IsWin);
-                genLiveBetView.AddBet(e.NewBet);
-                
-                if (LivebetVMs.ContainsKey(e.NewBet.Game))
-                    LivebetVMs[e.NewBet.Game].AddBet(e.NewBet);
+                if (e.NewBet != null)
+                {
+                    SiteStatsData.StatsUpdated(botIns.SiteStats);
+                    SessionStatsData.StatsUpdated(botIns.Stats);
+                    ChartData.AddPoint(e.NewBet.Profit, e.NewBet.IsWin);
+                    genLiveBetView.AddBet(e.NewBet);
+
+                    if (LivebetVMs.TryGetValue(e.NewBet.Game, out var liveBetVM))
+                        liveBetVM.AddBet(e.NewBet);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BetFinished handler failed");
             }
         }
 
         private void BotIns_OnSiteLoginFinished(object sender, LoginFinishedEventArgs e)
         {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                Dispatcher.UIThread.Post(() => BotIns_OnSiteLoginFinished(sender, e));
+                return;
+            }
             SiteStatsData.Stats = e.Stats;
             SiteStatsData.RaisePropertyChanged(nameof(SiteStatsData.Stats));
             this.RaisePropertyChanged(nameof(LoggedIn));

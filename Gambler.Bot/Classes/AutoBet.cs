@@ -901,11 +901,20 @@ namespace Gambler.Bot.Classes
         {
             await Task.Run(async () =>
             {
-                if (!resume)
-                    await PlaceBet(Strategy.Start(CurrentGame));
-                if (MostRecentBet==null)
+                try
                 {
-                    StopStrategy("Initial bet failed.");
+                    if (!resume)
+                        await PlaceBet(Strategy.Start(CurrentGame));
+                    if (MostRecentBet == null)
+                    {
+                        StopStrategy("Initial bet failed.");
+                        return;
+                    }
+                }
+                catch (Exception E)
+                {
+                    _Logger?.LogError(E.ToString());
+                    StopStrategy($"Initial bet failed: {E.Message}");
                     return;
                 }
                 while (Running)
@@ -1101,9 +1110,9 @@ namespace Gambler.Bot.Classes
 
         public void StopStrategy(string Reason)
         {
-            
             bool wasrunning = Running;
             Running = false;
+            BetTimer.Enabled = false;
             if (Stats != null)
             {
                 Stats.EndTime = DateTime.Now;
