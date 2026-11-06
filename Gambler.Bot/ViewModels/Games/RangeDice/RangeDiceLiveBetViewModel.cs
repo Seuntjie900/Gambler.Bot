@@ -41,7 +41,10 @@ namespace Gambler.Bot.ViewModels.Games.RangeDice
                 }
                 else
                 {
-                    Dispatcher.UIThread.Invoke(() => AddBet(newBet));
+                    if (UISettings.Settings.AsyncUIUpdates)
+                        Dispatcher.UIThread.Post(() => AddBet(newBet));
+                    else
+                        Dispatcher.UIThread.Invoke(() => AddBet(newBet));
                 }
             }
             catch (Exception e)

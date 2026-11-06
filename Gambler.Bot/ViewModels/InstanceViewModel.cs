@@ -158,6 +158,7 @@ namespace Gambler.Bot.ViewModels
             tmp.OnSiteError += Tmp_OnSiteError;
             tmp.PropertyChanged += Tmp_PropertyChanged;
             tmp.OnSiteStatsUpdated += Tmp_OnSiteStatsUpdated;
+            tmp.OnSessionStatsUpdated += Tmp_OnSessionStatsUpdated;
             tmp.GetStrats();
             BotInstance = tmp;
             botIns.CurrentGame = Bot.Common.Games.Games.Dice;
@@ -170,6 +171,11 @@ namespace Gambler.Bot.ViewModels
         private void Tmp_OnSiteStatsUpdated(object? sender, StatsUpdatedEventArgs e)
         {
             SiteStatsData.StatsUpdated(botIns.SiteStats);
+        }
+
+        private void Tmp_OnSessionStatsUpdated(object? sender, EventArgs e)
+        {
+            SessionStatsData.StatsUpdated(botIns.Stats);
         }
 
         private async Task Tmp_OnCFCaptchaBypass(string e)
@@ -322,6 +328,11 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private void BotIns_OnGameChanged(object? sender, EventArgs e)
         {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                Dispatcher.UIThread.Invoke(() => BotIns_OnGameChanged(sender, e));
+                return;
+            }
             if (PlaceBetVM != null)
                 PlaceBetVM.PlaceBet -= PlaceBetVM_PlaceBet;
 
@@ -372,20 +383,32 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
         private async void BotIns_OnSiteBetFinished(object sender, BetFinisedEventArgs e)
         {
-            if (e.NewBet != null)
+            try
             {
-                SiteStatsData.StatsUpdated(botIns.SiteStats);
-                SessionStatsData.StatsUpdated(botIns.Stats);
-                ChartData.AddPoint(e.NewBet.Profit, e.NewBet.IsWin);
-                genLiveBetView.AddBet(e.NewBet);
-                
-                if (LivebetVMs.ContainsKey(e.NewBet.Game))
-                    LivebetVMs[e.NewBet.Game].AddBet(e.NewBet);
+                if (e.NewBet != null)
+                {
+                    SiteStatsData.StatsUpdated(botIns.SiteStats);
+                    SessionStatsData.StatsUpdated(botIns.Stats);
+                    ChartData.AddPoint(e.NewBet.Profit, e.NewBet.IsWin);
+                    genLiveBetView.AddBet(e.NewBet);
+
+                    if (LivebetVMs.TryGetValue(e.NewBet.Game, out var liveBetVM))
+                        liveBetVM.AddBet(e.NewBet);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BetFinished handler failed");
             }
         }
 
         private void BotIns_OnSiteLoginFinished(object sender, LoginFinishedEventArgs e)
         {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                Dispatcher.UIThread.Post(() => BotIns_OnSiteLoginFinished(sender, e));
+                return;
+            }
             SiteStatsData.Stats = e.Stats;
             SiteStatsData.RaisePropertyChanged(nameof(SiteStatsData.Stats));
             this.RaisePropertyChanged(nameof(LoggedIn));
@@ -450,6 +473,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
             //}
             StatusMessage = "Stopping: " + e.Message;
+            SiteStatsData.StatsUpdated(botIns.SiteStats);
+            SessionStatsData.StatsUpdated(botIns.Stats);
             this.RaisePropertyChanged(nameof(Running));
             this.RaisePropertyChanged(nameof(Stopped));
             setCanResume();
@@ -789,7 +814,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
             CanResume = ((botIns?.LoggedIn ?? false) &&
                 botIns.Strategy != null &&
                 !botIns.Running &&
-                !botIns.RunningSimulation);
+                !botIns.RunningSimulation &&
+                botIns.MostRecentBet != null);
         }
         void setCanStart()
         {
@@ -940,12 +966,22 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         private void Tmp_OnSiteError(object sender, Bot.Common.Events.ErrorEventArgs e)
         {
             if (!Dispatcher.UIThread.CheckAccess())
-                Dispatcher.UIThread
-                    .Invoke(
-                        () =>
-                        {
-                            Tmp_OnSiteError(sender, e);
-                        });
+            {
+                if (UISettings.Settings.AsyncUIUpdates)
+                    Dispatcher.UIThread
+                        .Post(
+                            () =>
+                            {
+                                Tmp_OnSiteError(sender, e);
+                            });
+                else
+                    Dispatcher.UIThread
+                        .Invoke(
+                            () =>
+                            {
+                                Tmp_OnSiteError(sender, e);
+                            });
+            }
             else
             {
                 StatusMessage = e.Message;
@@ -956,12 +992,22 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
         private void Tmp_OnSiteNotify(object sender, GenericEventArgs e)
         {
             if (!Dispatcher.UIThread.CheckAccess())
-                Dispatcher.UIThread
-                    .Invoke(
-                        () =>
-                        {
-                            Tmp_OnSiteNotify(sender, e);
-                        });
+            {
+                if (UISettings.Settings.AsyncUIUpdates)
+                    Dispatcher.UIThread
+                        .Post(
+                            () =>
+                            {
+                                Tmp_OnSiteNotify(sender, e);
+                            });
+                else
+                    Dispatcher.UIThread
+                        .Invoke(
+                            () =>
+                            {
+                                Tmp_OnSiteNotify(sender, e);
+                            });
+            }
             else
             {
                 StatusMessage = e.Message;

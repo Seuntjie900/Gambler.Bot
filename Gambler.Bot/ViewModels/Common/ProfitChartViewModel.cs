@@ -44,8 +44,11 @@ new LabelVisual
 
         int ChartItems = 0;
         decimal ChartProfit = 0;
-delegate void dAddPoint(decimal profit);
+        delegate void dAddPoint(decimal profit);
         bool enabled = true;
+
+        static readonly SolidColorPaint WinPointPaint = new SolidColorPaint(SKColors.Green);
+        static readonly SolidColorPaint LossPointPaint = new SolidColorPaint(SKColors.Red);
 
         public bool Enabled
         {
@@ -109,14 +112,14 @@ delegate void dAddPoint(decimal profit);
             if(obj.Model.Win)
             {        
                 
-                obj.Visual.Fill = new SolidColorPaint(SKColors.Green);
-                obj.Visual.Stroke = new SolidColorPaint(SKColors.Green);
+                obj.Visual.Fill = WinPointPaint;
+                obj.Visual.Stroke = WinPointPaint;
                 
                 //obj.Visual.
             } else
             { //if going down: red
-                obj.Visual.Fill = new SolidColorPaint(SKColors.Red);
-                obj.Visual.Stroke = new SolidColorPaint(SKColors.Red);
+                obj.Visual.Fill = LossPointPaint;
+                obj.Visual.Stroke = LossPointPaint;
                 
             }
             //(obj.Context.Series as LineSeries<SimpleDataPoint>).Stroke = obj.Visual.Stroke;
@@ -127,12 +130,22 @@ delegate void dAddPoint(decimal profit);
             if(Enabled)
             {
                 if(!Dispatcher.UIThread.CheckAccess())
-                    Dispatcher.UIThread
-                        .Invoke(
-                            () =>
-                            {
-                                AddPoint(BetProfit, win);
-                            });
+                {
+                    if (UISettings.Settings.AsyncUIUpdates)
+                        Dispatcher.UIThread
+                            .Post(
+                                () =>
+                                {
+                                    AddPoint(BetProfit, win);
+                                });
+                    else
+                        Dispatcher.UIThread
+                            .Invoke(
+                                () =>
+                                {
+                                    AddPoint(BetProfit, win);
+                                });
+                }
                 else
                 {
                     ChartProfit += BetProfit;
