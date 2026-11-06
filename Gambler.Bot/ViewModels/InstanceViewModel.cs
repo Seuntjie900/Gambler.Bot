@@ -158,6 +158,7 @@ namespace Gambler.Bot.ViewModels
             tmp.OnSiteError += Tmp_OnSiteError;
             tmp.PropertyChanged += Tmp_PropertyChanged;
             tmp.OnSiteStatsUpdated += Tmp_OnSiteStatsUpdated;
+            tmp.OnSessionStatsUpdated += Tmp_OnSessionStatsUpdated;
             tmp.GetStrats();
             BotInstance = tmp;
             botIns.CurrentGame = Bot.Common.Games.Games.Dice;
@@ -170,6 +171,11 @@ namespace Gambler.Bot.ViewModels
         private void Tmp_OnSiteStatsUpdated(object? sender, StatsUpdatedEventArgs e)
         {
             SiteStatsData.StatsUpdated(botIns.SiteStats);
+        }
+
+        private void Tmp_OnSessionStatsUpdated(object? sender, EventArgs e)
+        {
+            SessionStatsData.StatsUpdated(botIns.Stats);
         }
 
         private async Task Tmp_OnCFCaptchaBypass(string e)
@@ -450,6 +456,8 @@ var langs2 = langs.Where(x => x.Source?.OriginalString?.Contains("/Lang/") ?? fa
 
             //}
             StatusMessage = "Stopping: " + e.Message;
+            SiteStatsData.StatsUpdated(botIns.SiteStats);
+            SessionStatsData.StatsUpdated(botIns.Stats);
             this.RaisePropertyChanged(nameof(Running));
             this.RaisePropertyChanged(nameof(Stopped));
             setCanResume();

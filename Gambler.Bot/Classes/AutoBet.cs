@@ -57,6 +57,7 @@ namespace Gambler.Bot.Classes
         public BotContext DBInterface { get; private set; }
 
         string LastBetGuid = "";
+        string LastCountedBetGuid = null;
         Queue<string> LastBetsGuids = new Queue<string>();
 
         /// <summary>
@@ -315,6 +316,7 @@ namespace Gambler.Bot.Classes
 
 
         public event EventHandler<StatsUpdatedEventArgs > OnSiteStatsUpdated;
+        public event EventHandler OnSessionStatsUpdated;
         public event EventHandler<GenericEventArgs> OnSiteAction;
         public event EventHandler<GenericEventArgs> OnSiteChat;
         public event EventHandler<BetFinisedEventArgs> OnSiteBetFinished;
@@ -928,7 +930,7 @@ namespace Gambler.Bot.Classes
                     }
                     if (!Running)
                     {
-                        return;
+                        break;
                     }
                     try
                     {
@@ -945,7 +947,7 @@ namespace Gambler.Bot.Classes
                         {
                             StopStrategy(Response);
                         }
-                        Stats.UpdateStats(MostRecentBet, win);
+                        CountMostRecentBet();
                         if (Strategy is IProgrammerMode prog)
                         {
                             prog.UpdateSessionStats(CopyHelper.CreateCopy<SessionStats>(Stats));
@@ -959,7 +961,7 @@ namespace Gambler.Bot.Classes
                         {
                             StopStrategy("Last bet did not match the latest bet placed.");
                             //stop
-                            return;
+                            break;
                         }
                         else
                         {
@@ -1044,16 +1046,16 @@ namespace Gambler.Bot.Classes
                         {
                             if (!Reset)
                              NextBext = CalculateNextBet();
-                            //stop may have been clicked while the bet delay was running
-                            if (!Running)
-                            {
-                                return;
-                            }
-                            if (NextBext == null)
-                            {
-                                StopStrategy("Strategy failed to generate next bet.");
-                                return;
-                            }
+                             //stop may have been clicked while the bet delay was running
+                             if (!Running)
+                             {
+                                 break;
+                             }
+                             if (NextBext == null)
+                             {
+                                 StopStrategy("Strategy failed to generate next bet.");
+                                 break;
+                             }
 
                             await PlaceBet(NextBext);
                         }
@@ -1063,6 +1065,15 @@ namespace Gambler.Bot.Classes
                     {
                         _Logger?.LogError(E.ToString());
                     }
+                }
+
+                // a bet may have finished while the stop was being processed (e.g. stop was
+                // clicked while a bet was in flight). Count it so the session stats reflect
+                // the final result, then persist the updated stats.
+                if (MostRecentBet != null)
+                {
+                    CountMostRecentBet();
+                    SaveStats();
                 }
             });
         }
@@ -1115,9 +1126,51 @@ namespace Gambler.Bot.Classes
             }
         }
 
+        /// <summary>
+        /// Counts the most recent bet into the session stats exactly once (guarded by bet GUID)
+        /// and raises <see cref="OnSessionStatsUpdated"/>. Returns true if a bet was counted.
+        /// </summary>
+        bool CountMostRecentBet()
+        {
+            if (MostRecentBet == null || Stats == null)
+                return false;
+            if (MostRecentBet.Guid == LastCountedBetGuid)
+                return false;
+            LastCountedBetGuid = MostRecentBet.Guid;
+            Stats.UpdateStats(MostRecentBet, MostRecentBet.IsWin);
+            OnSessionStatsUpdated?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        /// <summary>
+        /// Persists the current session stats to the database.
+        /// </summary>
+        void SaveStats()
+        {
+            if (DBInterface == null || Stats == null)
+                return;
+            if (Stats.SessionStatsId <= 0)
+            {
+                DBInterface.Add(Stats);
+            }
+            else if (DBInterface.Entry(Stats).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
+            {
+                DBInterface.Attach(Stats);
+                DBInterface.Entry(Stats).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            }
+            try
+            {
+                DBInterface.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                _Logger.LogError(e.ToString());
+            }
+        }
+
         public void StopStrategy(string Reason)
         {
-            
+
             bool wasrunning = Running;
             Running = false;
             if (Stats != null)
@@ -1127,25 +1180,7 @@ namespace Gambler.Bot.Classes
                 if (wasrunning)
                 {
                     Stats.RunningTime += (long)(Stats.EndTime - Stats.StartTime).TotalMilliseconds;
-                    if (DBInterface != null)
-                    {
-
-                        if (Stats.SessionStatsId<=0)
-                            DBInterface.Add(Stats);
-                        else if (DBInterface.Entry(Stats).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
-                        {
-                            DBInterface.Attach(Stats);
-                            DBInterface.Entry(Stats).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                        }
-                        try
-                        {
-                            DBInterface?.SaveChanges();
-                        }
-                        catch (Exception e)
-                        {
-                            _Logger.LogError(e.ToString());
-                        }
-                    }
+                    SaveStats();
                 }
             }
 
@@ -1159,27 +1194,10 @@ namespace Gambler.Bot.Classes
             if (Running)
             {
                 Stats.EndTime = DateTime.Now;
-                Stats.RunningTime += (long)(Stats.EndTime - Stats.EndTime).TotalMilliseconds;
+                Stats.RunningTime += (long)(Stats.EndTime - Stats.StartTime).TotalMilliseconds;
             }
             TotalRuntime += Stats.RunningTime;
-            if (this.DBInterface != null)
-            {
-                if (Stats.SessionStatsId <= 0)
-                    DBInterface.Add(Stats);
-                else if (DBInterface.Entry(Stats).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
-                {
-                    DBInterface.Attach(Stats);
-                    DBInterface.Entry(Stats).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                }
-                try
-                {
-                    this.DBInterface.SaveChanges();
-                }
-                catch (Exception ex)
-                {
-                    _Logger?.LogError(ex.ToString());
-                }
-            }
+            SaveStats();
 
             Stats = new SessionStats();
         }
