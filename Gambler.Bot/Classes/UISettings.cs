@@ -19,6 +19,8 @@ namespace Gambler.Bot.Classes
         public int LiveBets { get => liveBets; set { liveBets = value; RaisePropertyChanged(); } }
         int consoleLines = 1000;
         public int ConsoleLines { get => consoleLines; set { consoleLines = value; RaisePropertyChanged(); } }
+        bool asyncUIUpdates = false;
+        public bool AsyncUIUpdates { get => asyncUIUpdates; set { asyncUIUpdates = value; RaisePropertyChanged(); } }
         string donateMode;
         string updateMode ="Prompt";
         public string UpdateMode 

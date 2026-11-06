@@ -129,7 +129,8 @@ namespace Gambler.Bot.ViewModels.Games.RangeDice
         void AdjustRangeFromChance()
         {
             decimal tmpChance = GetChance();
-            while (Chance != tmpChance)
+            int iterations = 0;
+            while (Chance != tmpChance && iterations++ < 100)
             {
                 if (type == RangeDiceType.In || type == RangeDiceType.Double)
                 {
@@ -154,8 +155,7 @@ namespace Gambler.Bot.ViewModels.Games.RangeDice
                 }
                 if (type == RangeDiceType.Out)
                 {
-                    //If game mode is in, adjust min up for bigger chance and down for smaller. max down for bigger, up for smaller
-                    
+                    //If game mode is out, adjust min down for bigger chance and up for smaller. max up for bigger, down for smaller
                     decimal diff = tmpChance - chance;
                     decimal tmpMin = min - (diff / 2m);
                     decimal tmpMax = max + (diff / 2m);
@@ -169,6 +169,8 @@ namespace Gambler.Bot.ViewModels.Games.RangeDice
                         tmpMin += tmpMax - ((GameSettings as RangeDiceConfig)?.MaxRoll ?? 100m);
                         tmpMax = ((GameSettings as RangeDiceConfig)?.MaxRoll ?? 100m);
                     }
+                    Min = tmpMin;
+                    Max = tmpMax;
                 }
                 
                 tmpChance = GetChance();
@@ -187,9 +189,9 @@ namespace Gambler.Bot.ViewModels.Games.RangeDice
                 case nameof(Max):
                 case nameof(Min2):
                 case nameof(Max2):
-                    if (Chance!= tmpChance)
+                    if (Chance != tmpChance)
                         Chance = tmpChance;
-                    if (Payout != Math.Round((100m - (GameSettings?.Edge ?? 1)) / Chance, 5))
+                    if (Chance > 0 && Payout != Math.Round((100m - (GameSettings?.Edge ?? 1)) / Chance, 5))
                     {
                         var newPayout = Math.Round((100m - (GameSettings?.Edge ?? 1)) / Chance, 5);
                         Payout = newPayout;
