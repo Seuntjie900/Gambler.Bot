@@ -109,6 +109,7 @@ namespace Gambler.Bot.ViewModels
 
         internal void OnClosing()
         {
+            Instance?.OnClosing();
             SaveUISettings();
         }
     }

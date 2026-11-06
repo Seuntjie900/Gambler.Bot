@@ -914,13 +914,23 @@ namespace Gambler.Bot.Classes
         {
             await Task.Run(async () =>
             {
-                if (!resume && Running)
-                    await PlaceBet(Strategy.Start(CurrentGame));
-                if (MostRecentBet==null)
+                try
                 {
-                    StopStrategy("Initial bet failed.");
+                    if (!resume && Running)
+                        await PlaceBet(Strategy.Start(CurrentGame));
+                    if (MostRecentBet == null)
+                    {
+                        StopStrategy("Initial bet failed.");
+                        return;
+                    }
+                }
+                catch (Exception E)
+                {
+                    _Logger?.LogError(E.ToString());
+                    StopStrategy($"Initial bet failed: {E.Message}");
                     return;
                 }
+              
                 while (Running)
                 {
                     
@@ -1170,20 +1180,25 @@ namespace Gambler.Bot.Classes
 
         public void StopStrategy(string Reason)
         {
-
-            bool wasrunning = Running;
-            Running = false;
-            if (Stats != null)
+            try
             {
-                Stats.EndTime = DateTime.Now;
-                //only account for the run once, so repeated stops (double clicks) don't double count
-                if (wasrunning)
+                bool wasrunning = Running;
+                Running = false;
+                if (Stats != null)
                 {
-                    Stats.RunningTime += (long)(Stats.EndTime - Stats.StartTime).TotalMilliseconds;
-                    SaveStats();
+                    Stats.EndTime = DateTime.Now;
+                    //only account for the run once, so repeated stops (double clicks) don't double count
+                    if (wasrunning)
+                    {
+                        Stats.RunningTime += (long)(Stats.EndTime - Stats.StartTime).TotalMilliseconds;
+                        SaveStats();
+                    }
                 }
             }
-
+            catch (Exception ex)
+            {
+                _Logger.LogError(ex.ToString());
+            }
             //TotalRuntime +=Stats.EndTime - Stats.StartTime;
             _Logger?.LogInformation(Reason);
             OnStopped?.Invoke(this, new GenericEventArgs { Message = Reason });
